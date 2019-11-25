@@ -9,7 +9,7 @@
 ![MicroBadger Layers](https://img.shields.io/microbadger/layers/felddy/weewx.svg)
 ![MicroBadger Size](https://img.shields.io/microbadger/image-size/felddy/weewx.svg)
 
-This docker container can be used to quickly get a running
+This docker container can be used to quickly get a
 [WeeWX](http://weewx.com) instance up and running.
 
 ## Usage ##
@@ -31,10 +31,6 @@ docker-compose build --build-arg VERSION=3.9.2
 ```
 
 ### Run ###
-
-```console
-docker-compose run --rm weewx
-```
 
 The easiest way to start the container is to create a
 `docker-compose.yml` similar to the following.  Modify any
