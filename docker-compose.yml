@@ -1,37 +1,32 @@
 ---
 version: "3.7"
 
+volumes:
+  data:
+
 # This docker-compose file is used to build and test the container
-
-secrets:
-  quote_txt:
-    file: ./src/secrets/quote.txt
-
 services:
-  example:
+  weewx:
     # Run the container normally
     build:
       # VERSION must be specified on the command line:
       # e.g., --build-arg VERSION=0.0.1
       context: .
       dockerfile: Dockerfile
-    image: cisagov/example
+    image: felddy/weewx
     init: true
     restart: "no"
-    environment:
-      - ECHO_MESSAGE=Hello World from docker-compose!
-    ports:
-      - target: "8080"
-        published: "8080"
-        protocol: tcp
-        mode: host
-    secrets:
-      - source: quote_txt
-        target: quote.txt
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+    # devices:
+    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
 
-  example-version:
+
+  weewx-version:
     # Run the container to collect version information
-    image: cisagov/example
+    image: felddy/weewx
     init: true
     restart: "no"
     command: --version

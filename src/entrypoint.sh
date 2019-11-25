@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -o nounset
+set -o errexit
+# Sha-bang cannot be /bin/bash (not available), but
+# the container's /bin/sh does support pipefail.
+# shellcheck disable=SC2039
+set -o pipefail
+
+CONF_FILE="/data/weewx.conf"
+
+if [ "$1" = "--version" ]; then
+  ./bin/weewxd --version
+  exit 0
+fi
+
+if [ ! -f ${CONF_FILE} ]; then
+  echo "A configration file not found on the container data volume."
+  cp weewx.conf ${CONF_FILE}
+  echo "The default configuration has copied."
+  # Change the default location of the SQLITE database to the volume
+  echo "Setting SQLITE_ROOT to the container volume."
+  sed -i "s/SQLITE_ROOT =.*/SQLITE_ROOT = \/data/g" /data/weewx.conf
+  echo "Running configuration tool."
+  ./bin/wee_config --reconfigure "${CONF_FILE}"
+  exit 1
+fi
+
+./bin/weewxd "$@"
