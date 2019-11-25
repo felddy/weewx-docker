@@ -93,8 +93,8 @@ jobs:
         run: docker load < dist/image.tar.gz
       - name: Create data volume mount
         run: mkdir data
-      - name: Generate default weewx.conf
-        run: docker-compose run weewx
+      - name: Generate test configuration
+        run: docker-compose run weewx --gen-test-config
       - name: Run tests
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
