@@ -1,64 +1,92 @@
-# weewx-docker 💀🐳 #
+# weewx-docker 🌩🐳 #
 
-[![GitHub Build Status](https://github.com/cisagov/weewx-docker/workflows/build/badge.svg)](https://github.com/cisagov/weewx-docker/actions)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/cisagov/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cisagov/weewx-docker/alerts/)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/cisagov/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cisagov/weewx-docker/context:python)
+[![GitHub Build Status](https://github.com/felddy/weewx-docker/workflows/build/badge.svg)](https://github.com/felddy/weewx-docker/actions)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/felddy/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/felddy/weewx-docker/alerts/)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/felddy/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/felddy/weewx-docker/context:python)
 
 ## Docker Image ##
 
-![MicroBadger Layers](https://img.shields.io/microbadger/layers/cisagov/example.svg)
-![MicroBadger Size](https://img.shields.io/microbadger/image-size/cisagov/example.svg)
+![MicroBadger Layers](https://img.shields.io/microbadger/layers/felddy/weewx.svg)
+![MicroBadger Size](https://img.shields.io/microbadger/image-size/felddy/weewx.svg)
 
-This is a docker skeleton project that can be used to quickly get a
-new [cisagov](https://github.com/cisagov) GitHub docker project
-started.  This skeleton project contains [licensing
-information](LICENSE), as well as [pre-commit hooks](https://pre-commit.com)
-and [GitHub Actions](https://github.com/features/actions) configurations
-appropriate for docker containers and the major languages that we use.
+This docker container can be used to quickly get a running
+[WeeWX](http://weewx.com) instance up and running.
 
 ## Usage ##
 
 ### Install ###
 
-Pull `cisagov/example` from the Docker repository:
+Pull `felddy/weewx` from the Docker repository:
 
-    docker pull cisagov/example
+```console
+docker pull felddy/weewx
+```
 
-Or build `cisagov/example` from source:
+Or build `felddy/weewx` from source:
 
-    git clone https://github.com/cisagov/weewx-docker.git
-    cd weewx-docker
-    docker-compose build --build-arg VERSION=0.0.1
+```console
+git clone https://github.com/felddy/weewx-docker.git
+cd weewx-docker
+docker-compose build --build-arg VERSION=3.9.2
+```
 
 ### Run ###
 
-    docker-compose run --rm example
+```console
+docker-compose run --rm weewx
+```
 
-## Ports ##
+The easiest way to start the container is to create a
+`docker-compose.yml` similar to the following.  Modify any
+paths or devices as needed:
 
-This container exposes the following ports:
+```yaml
+---
+version: "3.7"
 
-| Port  | Protocol | Service  |
-|-------|----------|----------|
-| 8080  | TCP      | http     |
+volumes:
+  data:
 
-## Environment Variables ##
+services:
+  weewx:
+    image: felddy/weewx
+    init: true
+    restart: "no"
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+```
 
-| Variable      | Default Value                 | Purpose      |
-|---------------|-------------------------------|--------------|
-| ECHO_MESSAGE  | `Hello World from Dockerfile` | Text to echo |
+Create a directory on the host to store the configuration and database files:
 
-## Secrets ##
+```console
+mkdir data
+```
 
-| Filename      | Purpose              |
-|---------------|----------------------|
-| quote.txt     | Secret text to echo  |
+If this is the first time running weewx, use the following command to
+start the container and generate a configuration file:
+
+```console
+docker-compose run weewx
+```
+
+The configuration file will be created in the `data` directory.
+You should edit this file to match the setup of your weather station.
+When you are satisfied with configuration the container can be started
+in the background with:
+
+```console
+docker-compose up -d
+```
 
 ## Volumes ##
 
 | Mount point | Purpose        |
 |-------------|----------------|
-| /var/log    | logging output |
+| /data    | configuration file and sqlite database storage |
 
 ## Contributing ##
 
