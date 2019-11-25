@@ -1,8 +1,8 @@
-# skeleton-docker 💀🐳 #
+# weewx-docker 💀🐳 #
 
-[![GitHub Build Status](https://github.com/cisagov/skeleton-docker/workflows/build/badge.svg)](https://github.com/cisagov/skeleton-docker/actions)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/cisagov/skeleton-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cisagov/skeleton-docker/alerts/)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/cisagov/skeleton-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cisagov/skeleton-docker/context:python)
+[![GitHub Build Status](https://github.com/cisagov/weewx-docker/workflows/build/badge.svg)](https://github.com/cisagov/weewx-docker/actions)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/cisagov/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cisagov/weewx-docker/alerts/)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/cisagov/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cisagov/weewx-docker/context:python)
 
 ## Docker Image ##
 
@@ -26,8 +26,8 @@ Pull `cisagov/example` from the Docker repository:
 
 Or build `cisagov/example` from source:
 
-    git clone https://github.com/cisagov/skeleton-docker.git
-    cd skeleton-docker
+    git clone https://github.com/cisagov/weewx-docker.git
+    cd weewx-docker
     docker-compose build --build-arg VERSION=0.0.1
 
 ### Run ###
