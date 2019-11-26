@@ -31,6 +31,11 @@ if [ "$1" = "--gen-test-config" ]; then
   exit 0
 fi
 
+if [ "$1" = "--shell" ]; then
+  /bin/sh
+  exit $?
+fi
+
 if [ ! -f ${CONF_FILE} ]; then
   copy_default_config
   echo "Running configuration tool."
