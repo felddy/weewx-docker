@@ -9,6 +9,14 @@ set -o pipefail
 
 CONF_FILE="/data/weewx.conf"
 
+if [ "$(id -u)" = 0 ]; then
+  # start the syslog daemon as root
+  /sbin/syslogd -n -S -O - &
+  # drop privileges and restart this script as weewx user
+  su-exec weewx:weewx "$(readlink -f "$0")" "$@"
+  exit 0
+fi
+
 copy_default_config() {
   # create a default configuration on the data volume
   echo "A configration file not found on the container data volume."
