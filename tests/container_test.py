@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-READY_MESSAGE = "LOOP:"
+READY_MESSAGE = "engine: Starting main packet loop"
 RELEASE_TAG = os.getenv("RELEASE_TAG")
 VERSION_FILE = "src/version.txt"
 
