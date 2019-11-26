@@ -22,7 +22,7 @@ ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apk --update --no-cache add tar
+RUN apk --update --no-cache add su-exec tar
 
 WORKDIR ${WEEWX_HOME}
 
@@ -36,8 +36,6 @@ RUN pip install --no-cache --requirement requirements.txt && \
     chown -R weewx:weewx . && \
     mkdir /data && \
     cp weewx.conf /data
-
-USER weewx
 
 VOLUME ["/data"]
 
