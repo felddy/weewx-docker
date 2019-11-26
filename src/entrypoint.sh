@@ -9,6 +9,12 @@ set -o pipefail
 
 CONF_FILE="/data/weewx.conf"
 
+# echo version before starting syslog so we don't confound our tests
+if [ "$1" = "--version" ]; then
+  su-exec weewx:weewx ./bin/weewxd --version
+  exit 0
+fi
+
 if [ "$(id -u)" = 0 ]; then
   # start the syslog daemon as root
   /sbin/syslogd -n -S -O - &
@@ -26,11 +32,6 @@ copy_default_config() {
   echo "Setting SQLITE_ROOT to the container volume."
   sed -i "s/SQLITE_ROOT =.*/SQLITE_ROOT = \/data/g" /data/weewx.conf
 }
-
-if [ "$1" = "--version" ]; then
-  ./bin/weewxd --version
-  exit 0
-fi
 
 if [ "$1" = "--gen-test-config" ]; then
   copy_default_config
