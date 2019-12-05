@@ -6,8 +6,8 @@
 
 ## Docker Image ##
 
+[![MicroBadger Version](https://images.microbadger.com/badges/version/felddy/weewx.svg)](https://hub.docker.com/repository/docker/felddy/weewx)
 ![MicroBadger Layers](https://img.shields.io/microbadger/layers/felddy/weewx.svg)
-![MicroBadger Size](https://img.shields.io/microbadger/image-size/felddy/weewx.svg)
 
 This docker container can be used to quickly get a
 [WeeWX](http://weewx.com) instance up and running.
@@ -47,7 +47,7 @@ services:
   weewx:
     image: felddy/weewx
     init: true
-    restart: "no"
+    restart: "yes"
     volumes:
       - type: bind
         source: ./data
