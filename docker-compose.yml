@@ -20,6 +20,9 @@ services:
       - type: bind
         source: ./data
         target: /data
+    environment:
+      - WEEWX_UID=weewx
+      - WEEWX_GID=dialout
     # devices:
     #   - "/dev/ttyUSB0:/dev/ttyUSB0"
 

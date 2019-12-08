@@ -19,7 +19,7 @@ if [ "$(id -u)" = 0 ]; then
   # start the syslog daemon as root
   /sbin/syslogd -n -S -O - &
   # drop privileges and restart this script as weewx user
-  su-exec weewx:weewx "$(readlink -f "$0")" "$@"
+  su-exec "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
   exit 0
 fi
 
