@@ -33,8 +33,12 @@ docker-compose build --build-arg VERSION=3.9.2
 ### Run ###
 
 The easiest way to start the container is to create a
-`docker-compose.yml` similar to the following.  Modify any
-paths or devices as needed:
+`docker-compose.yml` similar to the following.  If you use a
+serial port to connect to your weather station, make sure the
+container has permissions to access the port.  The uid/gid can
+be set using the environment variables below.
+
+Modify any paths or devices as needed:
 
 ```yaml
 ---
@@ -52,6 +56,9 @@ services:
       - type: bind
         source: ./data
         target: /data
+    environment:
+      - WEEWX_UID=weewx
+      - WEEWX_GID=dialout
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
 ```
@@ -83,6 +90,13 @@ docker-compose up -d
 | Mount point | Purpose        |
 |-------------|----------------|
 | /data    | configuration file and sqlite database storage |
+
+## Environment Variables ##
+
+| Mount point  | Purpose        |
+|--------------|----------------|
+| WEEWX_UID    | The `uid` the daemon will be run under (optional) |
+| WEEWX_GID    | The `gid` the deamon will be run under (optional) |
 
 ## Contributing ##
 
