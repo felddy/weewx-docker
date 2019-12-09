@@ -48,3 +48,6 @@ jobs:
             .
       - name: Publish README.md to Docker Hub
         run: ./push_readme.sh
+      - name: Setup tmate debug session
+        uses: mxschmitt/action-tmate@v1
+        if: env.RUN_TMATE
