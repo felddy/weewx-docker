@@ -54,7 +54,6 @@ jobs:
           version: latest
       - name: Build docker image
         run: |
-          version=$(./bump_version.sh show)
           docker buildx build \
             --platform $PLATFORMS \
             --output "type=image,push=false" \
@@ -66,7 +65,6 @@ jobs:
       - name: Save docker image artifact
         run: |
           mkdir dist
-          version=$(./bump_version.sh show)
           docker save $IMAGE_NAME:latest | gzip > dist/image.tar.gz
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
