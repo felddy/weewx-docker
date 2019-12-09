@@ -54,6 +54,8 @@ jobs:
       - name: Build docker image
         run: |
           mkdir -p dist
+          IFS='.' read -r -a version_array \
+            <<< "${{ steps.get_ver.outputs.version }}"
           docker buildx build \
             --platform linux/amd64 \
             --output "type=tar,dest=dist/image.tar" \
