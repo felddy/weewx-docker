@@ -31,8 +31,8 @@ jobs:
         run: |
           docker buildx build \
             --platform \
-              linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
-              linux/arm64,linux/ppc64le,linux/s390x \
+              "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
+              linux/arm64,linux/ppc64le,linux/s390x" \
             --output "type=image,push=false" \
             --tag "$IMAGE_NAME" \
             --build-arg GIT_COMMIT=$(git log -1 --format=%H) \
