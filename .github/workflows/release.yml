@@ -9,6 +9,8 @@ env:
   IMAGE_NAME: felddy/weewx
   DOCKER_PW: ${{ secrets.DOCKER_PW }}
   DOCKER_USER: ${{ secrets.DOCKER_USER }}
+  PLATFORMS: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
+    linux/arm64,linux/ppc64le,linux/s390x"
 
 jobs:
   release:
@@ -30,9 +32,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker buildx build \
-            --platform \
-              "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
-              linux/arm64,linux/ppc64le,linux/s390x" \
+            --platform "$PLATFORMS", \
             --output "type=image,push=false" \
             --tag "$IMAGE_NAME" \
             --build-arg GIT_COMMIT=$(git log -1 --format=%H) \
