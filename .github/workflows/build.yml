@@ -49,24 +49,14 @@ jobs:
         id: get_ver
         run: |
           echo "##[set-output name=version;]$(./bump_version.sh show)"
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          version: latest
       - name: Build docker image
         run: |
-          docker buildx build \
-            --platform $PLATFORMS \
-            --output "type=image,push=false" \
+          docker build \
             --tag "$IMAGE_NAME" \
             --build-arg GIT_COMMIT=$(git log -1 --format=%H) \
             --build-arg GIT_REMOTE=$(git remote get-url origin) \
             --build-arg VERSION=${{ steps.get_ver.outputs.version }} \
             .
-      - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@v1
-        if: env.RUN_TMATE
       - name: Save docker image artifact
         run: |
           mkdir dist
