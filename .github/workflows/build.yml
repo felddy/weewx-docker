@@ -7,7 +7,6 @@ env:
   IMAGE_NAME: felddy/weewx
   PIP_CACHE_DIR: ~/.cache/pip
   PRE_COMMIT_CACHE_DIR: ~/.cache/pre-commit
-  RUN_TMATE: ${{ secrets.RUN_TMATE }}
 
 
 jobs:
