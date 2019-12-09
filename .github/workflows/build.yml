@@ -45,6 +45,11 @@ jobs:
         id: get_ver
         run: |
           echo "##[set-output name=version;]$(./bump_version.sh show)"
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          version: latest
       - name: Build docker image
         run: |
           version=$(./bump_version.sh show)
