@@ -62,6 +62,9 @@ jobs:
             --build-arg GIT_REMOTE=$(git remote get-url origin) \
             --build-arg VERSION=${{ steps.get_ver.outputs.version }} \
             .
+      - name: Setup tmate debug session
+        uses: mxschmitt/action-tmate@v1
+        if: env.RUN_TMATE
       - name: Save docker image artifact
         run: |
           mkdir dist
