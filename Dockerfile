@@ -1,11 +1,13 @@
 ARG GIT_COMMIT=unspecified
 ARG GIT_REMOTE=unspecified
+ARG TARGETPLATFORM=amd64
 ARG VERSION=unspecified
 
-FROM python:2.7-alpine
+FROM --platform=$TARGETPLATFORM python:2.7-alpine
 
 ARG GIT_COMMIT
 ARG GIT_REMOTE
+ARG TARGETPLATFORM
 ARG VERSION
 
 LABEL org.opencontainers.image.authors="markf+github@geekpad.com"
