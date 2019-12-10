@@ -1,6 +1,5 @@
 ARG GIT_COMMIT=unspecified
 ARG GIT_REMOTE=unspecified
-ARG TARGETPLATFORM=amd64
 ARG VERSION=unspecified
 
 FROM --platform=$TARGETPLATFORM python:2.7-alpine
