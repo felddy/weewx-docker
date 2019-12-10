@@ -22,14 +22,6 @@ Pull `felddy/weewx` from the Docker repository:
 docker pull felddy/weewx
 ```
 
-Or build `felddy/weewx` from source:
-
-```console
-git clone https://github.com/felddy/weewx-docker.git
-cd weewx-docker
-docker-compose build --build-arg VERSION=3.9.2
-```
-
 ### Run ###
 
 The easiest way to start the container is to create a
@@ -99,6 +91,36 @@ docker-compose up -d
 | TIMEZONE     | Container [TZ database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) | UTC |
 | WEEWX_UID    | `uid` the daemon will be run under | weewx |
 | WEEWX_GID    | `gid` the deamon will be run under | weewx |
+
+## Building ##
+
+This Docker container has multi-platform support and requires
+the use of the
+[`buildx` experimental feature](https://docs.docker.com/buildx/working-with-buildx/).
+Make sure to enable experimental features in your environment.
+
+To build the container from source:
+
+```console
+git clone https://github.com/felddy/weewx-docker.git
+cd weewx-docker
+docker buildx build \
+  --platform linux/amd64 \
+  --build-arg VERSION=3.9.2 \
+  --output type=docker \
+  --tag felddy/weewx .
+```
+
+## Debugging ##
+
+There are a few helper arguments that can be used to diagnose container issues
+in your environment.
+
+| Purpose | Command |
+|---------|---------|
+| Generate the default configuration | `docker-compose run weewx` |
+| Generate a test (simulator) configuration | `docker-compose run weewx --gen-test-config` |
+| Drop into a shell in the container | `docker-compose run weewx --shell` |
 
 ## Contributing ##
 
