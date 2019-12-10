@@ -25,7 +25,7 @@ ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apk --update --no-cache add su-exec tar
+RUN apk --update --no-cache add su-exec tar tzdata
 
 WORKDIR ${WEEWX_HOME}
 
