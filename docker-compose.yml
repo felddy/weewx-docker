@@ -21,6 +21,7 @@ services:
         source: ./data
         target: /data
     environment:
+      - TIMEZONE=US/Eastern
       - WEEWX_UID=weewx
       - WEEWX_GID=dialout
     # devices:

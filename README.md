@@ -57,6 +57,7 @@ services:
         source: ./data
         target: /data
     environment:
+      - TIMEZONE=US/Eastern
       - WEEWX_UID=weewx
       - WEEWX_GID=dialout
     devices:
@@ -93,10 +94,11 @@ docker-compose up -d
 
 ## Environment Variables ##
 
-| Mount point  | Purpose        |
-|--------------|----------------|
-| WEEWX_UID    | The `uid` the daemon will be run under (optional) |
-| WEEWX_GID    | The `gid` the deamon will be run under (optional) |
+| Mount point  | Purpose | Default |
+|--------------|---------|---------|
+| TIMEZONE     | Container [TZ database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) | UTC |
+| WEEWX_UID    | `uid` the daemon will be run under | weewx |
+| WEEWX_GID    | `gid` the deamon will be run under | weewx |
 
 ## Contributing ##
 
