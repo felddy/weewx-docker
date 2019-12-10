@@ -58,7 +58,7 @@ jobs:
             <<< "${{ steps.get_ver.outputs.version }}"
           docker buildx build \
             --platform linux/amd64 \
-            --output "type=tar,dest=dist/image.tar" \
+            --output "type=docker,dest=dist/image.tar" \
             --tag "$IMAGE_NAME:latest" \
             --tag "${IMAGE_NAME}:${{ steps.get_ver.outputs.version }}" \
             --tag "${IMAGE_NAME}:${version_array[0]}.${version_array[1]}" \
