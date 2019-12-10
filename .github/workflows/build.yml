@@ -7,7 +7,6 @@ env:
   IMAGE_NAME: felddy/weewx
   PIP_CACHE_DIR: ~/.cache/pip
   PRE_COMMIT_CACHE_DIR: ~/.cache/pre-commit
-  RUN_TMATE: ${{ secrets.RUN_TMATE }}
 
 jobs:
   lint:
@@ -99,9 +98,6 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: dist
-      - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@v1
-        if: env.RUN_TMATE
       - name: Load docker image
         run: docker load < dist/image.tar.gz
       - name: Create data volume mount
