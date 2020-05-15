@@ -17,10 +17,13 @@ RUN apk --no-cache add tar
 WORKDIR /tmp
 COPY src/hashes requirements.txt ./
 
-# WeeWX setup
+# Download sources and verify hashes
 RUN wget -O "${ARCHIVE}" "http://www.weewx.com/downloads/released_versions/${ARCHIVE}"
+RUN wget -O weewx-mqtt.zip https://github.com/matthewwall/weewx-mqtt/archive/master.zip
 RUN sha256sum -c < hashes
-RUN tar --extract --gunzip --directory ${WEEWX_HOME} --strip-components=1 --file "/tmp/${ARCHIVE}"
+
+# WeeWX setup
+RUN tar --extract --gunzip --directory ${WEEWX_HOME} --strip-components=1 --file "${ARCHIVE}"
 RUN chown -R weewx:weewx ${WEEWX_HOME}
 
 # Python setup
@@ -29,9 +32,10 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache --requirement requirements.txt
 
 WORKDIR ${WEEWX_HOME}
+
+RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 COPY src/entrypoint.sh src/version.txt ./
 
-##########
 FROM --platform=$TARGETPLATFORM python:3-alpine as stage-2
 
 ARG GIT_COMMIT
