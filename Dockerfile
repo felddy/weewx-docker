@@ -12,7 +12,7 @@ ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apk --update --no-cache add tar
+RUN apk --no-cache add tar
 
 WORKDIR /tmp
 COPY src/hashes requirements.txt ./
@@ -54,7 +54,7 @@ ENV WEEWX_VERSION="4.0.0"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apk --update --no-cache add su-exec tzdata
+RUN apk --no-cache add su-exec tzdata
 
 WORKDIR ${WEEWX_HOME}
 
