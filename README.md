@@ -34,7 +34,7 @@ Modify any paths or devices as needed:
 
 ```yaml
 ---
-version: "3.7"
+version: "3.8"
 
 volumes:
   data:
@@ -56,27 +56,59 @@ services:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
 ```
 
-Create a directory on the host to store the configuration and database files:
+1. Create a directory on the host to store the configuration and database files:
 
-```console
-mkdir data
-```
+    ```console
+    mkdir data
+    ```
 
-If this is the first time running weewx, use the following command to
-start the container and generate a configuration file:
+1. If this is the first time running weewx, use the following command to start
+   the container and generate a configuration file:
 
-```console
-docker-compose run weewx
-```
+    ```console
+    docker-compose run weewx
+    ```
 
-The configuration file will be created in the `data` directory.
-You should edit this file to match the setup of your weather station.
-When you are satisfied with configuration the container can be started
-in the background with:
+1. The configuration file will be created in the `data` directory.  You should
+   edit this file to match the setup of your weather station.
 
-```console
-docker-compose up -d
-```
+1. When you are satisfied with configuration the container can be started in the
+   background with:
+
+    ```console
+    docker-compose up -d
+    ```
+
+## Upgrading ##
+
+1. Stop the running container:
+
+    ```console
+    docker-compose down
+    ```
+
+1. Pull the new images from the Docker hub:
+
+    ```console
+    docker-compose pull
+    ```
+
+1. Update your configuration file (a backup will be created):
+
+    ```console
+    docker-compose run weewx --upgrade
+    ```
+
+1. Read through the new configuration and verify.
+   It is helpful to `diff` the new config with the backup.  Check the
+   [WeeWX Upgrade Guide](http://weewx.com/docs/upgrading.htm#Instructions_for_specific_versions)
+   for instructions for specific versions.
+
+1. Start the container up with the new image version:
+
+    ```console
+    docker-compose up -d
+    ```
 
 ## Volumes ##
 
