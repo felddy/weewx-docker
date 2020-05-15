@@ -2,7 +2,7 @@ ARG GIT_COMMIT=unspecified
 ARG GIT_REMOTE=unspecified
 ARG VERSION=unspecified
 
-FROM --platform=$TARGETPLATFORM python:2.7-alpine
+FROM --platform=$TARGETPLATFORM python:3-alpine
 
 ARG GIT_COMMIT
 ARG GIT_REMOTE
@@ -19,7 +19,7 @@ LABEL org.opencontainers.image.version=${VERSION}
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="3.9.2"
+ENV WEEWX_VERSION="4.0.0"
 ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \

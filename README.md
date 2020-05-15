@@ -106,7 +106,7 @@ git clone https://github.com/felddy/weewx-docker.git
 cd weewx-docker
 docker buildx build \
   --platform linux/amd64 \
-  --build-arg VERSION=3.9.2 \
+  --build-arg VERSION=4.0.0 \
   --output type=docker \
   --tag felddy/weewx .
 ```
@@ -119,6 +119,7 @@ in your environment.
 | Purpose | Command |
 |---------|---------|
 | Generate the default configuration | `docker-compose run weewx` |
+| Upgrade a previous configuration | `docker-compose run weewx --upgrade` |
 | Generate a test (simulator) configuration | `docker-compose run weewx --gen-test-config` |
 | Drop into a shell in the container | `docker-compose run weewx --shell` |
 

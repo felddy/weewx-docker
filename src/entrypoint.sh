@@ -47,6 +47,11 @@ if [ "$1" = "--shell" ]; then
   exit $?
 fi
 
+if [ "$1" = "--upgrade" ]; then
+  ./bin/wee_config --upgrade --no-prompt --dist-config weewx.conf "${CONF_FILE}"
+  exit $?
+fi
+
 if [ ! -f "${CONF_FILE}" ]; then
   copy_default_config
   echo "Running configuration tool."

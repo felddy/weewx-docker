@@ -9,8 +9,8 @@ services:
   weewx:
     # Run the container normally
     build:
-      # VERSION must be specified on the command line:
-      # e.g., --build-arg VERSION=0.0.1
+      args:
+        - VERSION=4.0.0
       context: .
       dockerfile: Dockerfile
     image: felddy/weewx
