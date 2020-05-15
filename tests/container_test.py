@@ -1,9 +1,11 @@
 #!/usr/bin/env pytest -vs
 """Tests for example container."""
 
+# Standard Python Libraries
 import os
 import time
 
+# Third-Party Libraries
 import pytest
 
 READY_MESSAGE = "engine: Starting main packet loop"
