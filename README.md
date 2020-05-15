@@ -12,6 +12,10 @@
 This docker container can be used to quickly get a
 [WeeWX](http://weewx.com) instance up and running.
 
+This container has the following WeeWX extensions installed:
+
+* [mqtt](https://github.com/weewx/weewx/wiki/mqtt)
+
 ## Usage ##
 
 ### Install ###
