@@ -27,7 +27,7 @@ fi
 
 copy_default_config() {
   # create a default configuration on the data volume
-  echo "A configration file not found on the container data volume."
+  echo "Creating a configration file on the container data volume."
   cp weewx.conf "${CONF_FILE}"
   echo "The default configuration has been copied."
   # Change the default location of the SQLITE database to the volume
