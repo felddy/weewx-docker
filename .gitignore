@@ -1,5 +1,10 @@
 .mypy_cache
+<<<<<<< HEAD
 .pytest_cache
 .python-version
 __pycache__
 data/*
+=======
+.python-version
+__pycache__
+>>>>>>> 70f0cbd612f1a13c26ed338d112d5f3cd7fe783f
