@@ -4,4 +4,8 @@
 # the repo. Unless a later match takes precedence,
 # these owners will be requested for review when someone
 # opens a pull request.
+<<<<<<< HEAD
 *       @felddy
+=======
+*       @dav3r @felddy @hillaryj @jsf9k @mcdonnnj @cisagov/team-ois
+>>>>>>> 70f0cbd612f1a13c26ed338d112d5f3cd7fe783f

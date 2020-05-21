@@ -99,9 +99,15 @@ can create and configure the Python virtual environment with these
 commands:
 
 ```console
+<<<<<<< HEAD
 cd weewx-docker
 pyenv virtualenv <python_version_to_use> weewx-docker
 pyenv local weewx-docker
+=======
+cd skeleton-generic
+pyenv virtualenv <python_version_to_use> skeleton-generic
+pyenv local skeleton-generic
+>>>>>>> 70f0cbd612f1a13c26ed338d112d5f3cd7fe783f
 pip install --requirement requirements-dev.txt
 ```
 
