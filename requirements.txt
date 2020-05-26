@@ -1,3 +1,4 @@
 configobj
 paho-mqtt
 pyserial
+pyusb
