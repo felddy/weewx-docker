@@ -130,22 +130,36 @@ services:
 
 ## Building ##
 
-This Docker container has multi-platform support and requires
-the use of the
-[`buildx` experimental feature](https://docs.docker.com/buildx/working-with-buildx/).
-Make sure to enable experimental features in your environment.
-
 To build the container from source:
 
 ```console
 git clone https://github.com/felddy/weewx-docker.git
 cd weewx-docker
-docker buildx build \
-  --platform linux/amd64 \
-  --build-arg VERSION=4.0.0 \
-  --output type=docker \
-  --tag felddy/weewx .
+docker-compose build
 ```
+
+## Cross-platform builds ##
+
+To create images that are compatible with other platforms you can use the
+[`buildx`](https://docs.docker.com/buildx/working-with-buildx/) feature of
+Docker:
+
+1. Create an new `Dockerfile-x` with `buildx` support:
+
+    ```console
+    ./buildx-dockerfile.sh
+    ```
+
+1. Build the image using `buildx`:
+
+    ```console
+    docker buildx build \
+      --file Dockerfile-x \
+      --platform linux/amd64 \
+      --build-arg VERSION=4.0.0 \
+      --output type=docker \
+      --tag felddy/weewx:4.0.0 .
+    ```
 
 ## Debugging ##
 
