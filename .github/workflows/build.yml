@@ -61,12 +61,15 @@ jobs:
         uses: crazy-max/ghaction-docker-buildx@v1
         with:
           version: latest
+      - name: Create cross-platform support Dockerfile-x
+        run: ./buildx-dockerfile.sh
       - name: Build docker image
         run: |
           mkdir -p dist
           IFS='.' read -r -a version_array \
             <<< "${{ steps.get_ver.outputs.version }}"
           docker buildx build \
+            --file Dockerfile-x
             --platform linux/amd64 \
             --output "type=docker,dest=dist/image.tar" \
             --tag "$IMAGE_NAME:latest" \

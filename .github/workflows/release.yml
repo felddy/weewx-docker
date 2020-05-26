@@ -32,11 +32,14 @@ jobs:
           version: latest
       - name: Log into docker registry
         run: docker login --username "$DOCKER_USER" --password "$DOCKER_PW"
+      - name: Create cross-platform support Dockerfile-x
+        run: ./buildx-dockerfile.sh
       - name: Build Docker images, tag, and publish
         run: |
           IFS='.' read -r -a version_array \
             <<< "${{ steps.get_ver.outputs.version }}"
           docker buildx build \
+            --file Dockerfile-x
             --platform $PLATFORMS \
             --output "type=image,push=true" \
             --tag "$IMAGE_NAME:latest" \
