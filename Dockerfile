@@ -2,7 +2,7 @@ ARG GIT_COMMIT=unspecified
 ARG GIT_REMOTE=unspecified
 ARG VERSION=unspecified
 
-FROM --platform=$TARGETPLATFORM python:3-alpine as stage-1
+FROM python:3-alpine as stage-1
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
@@ -36,7 +36,7 @@ WORKDIR ${WEEWX_HOME}
 RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 COPY src/entrypoint.sh src/version.txt ./
 
-FROM --platform=$TARGETPLATFORM python:3-slim as stage-2
+FROM python:3-slim as stage-2
 
 ARG GIT_COMMIT
 ARG GIT_REMOTE
