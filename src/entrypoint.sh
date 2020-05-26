@@ -1,10 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 set -o nounset
 set -o errexit
-# Sha-bang cannot be /bin/bash (not available), but
-# the container's /bin/sh does support pipefail.
-# shellcheck disable=SC2039
 set -o pipefail
 
 CONF_FILE="/data/weewx.conf"
@@ -21,7 +18,7 @@ if [ "$(id -u)" = 0 ]; then
   # start the syslog daemon as root
   /sbin/syslogd -n -S -O - &
   # drop privileges and restart this script as weewx user
-  su-exec "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
+  gosu "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
   exit 0
 fi
 
