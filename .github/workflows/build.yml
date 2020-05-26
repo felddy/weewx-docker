@@ -69,7 +69,7 @@ jobs:
           IFS='.' read -r -a version_array \
             <<< "${{ steps.get_ver.outputs.version }}"
           docker buildx build \
-            --file Dockerfile-x
+            --file Dockerfile-x \
             --platform linux/amd64 \
             --output "type=docker,dest=dist/image.tar" \
             --tag "$IMAGE_NAME:latest" \
