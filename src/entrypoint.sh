@@ -8,7 +8,7 @@ CONF_FILE="/data/weewx.conf"
 
 # echo version before starting syslog so we don't confound our tests
 if [ "$1" = "--version" ]; then
-  su-exec weewx:weewx ./bin/weewxd --version
+  gosu weewx:weewx ./bin/weewxd --version
   exit 0
 fi
 
