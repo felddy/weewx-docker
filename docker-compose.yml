@@ -13,7 +13,7 @@ services:
         - VERSION=4.0.0
       context: .
       dockerfile: Dockerfile
-    image: felddy/weewx
+    image: felddy/weewx:4.0.0
     init: true
     restart: "no"
     volumes:
