@@ -20,7 +20,7 @@ if [ "$(id -u)" = 0 ]; then
   if [ "${WEEWX_UID:-weewx}" != 0 ]; then
     # drop privileges and restart this script
     echo "Switching uid:gid to ${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}"
-    su-exec "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
+    gosu "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
     exit 0
   fi
 fi
