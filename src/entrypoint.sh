@@ -17,9 +17,12 @@ if [ "$(id -u)" = 0 ]; then
   ln -snf /usr/share/zoneinfo/"${TIMEZONE:-UTC}" /etc/localtime
   # start the syslog daemon as root
   /sbin/syslogd -n -S -O - &
-  # drop privileges and restart this script as weewx user
-  gosu "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
-  exit 0
+  if [ "${WEEWX_UID:-weewx}" != 0 ]; then
+    # drop privileges and restart this script
+    echo "Switching uid:gid to ${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}"
+    su-exec "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
+    exit 0
+  fi
 fi
 
 copy_default_config() {
