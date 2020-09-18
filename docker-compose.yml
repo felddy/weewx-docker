@@ -10,7 +10,7 @@ services:
     # Run the container normally
     build:
       args:
-        - VERSION=4.0.0
+        - VERSION=4.1.1
       context: .
       dockerfile: Dockerfile
     image: felddy/weewx
