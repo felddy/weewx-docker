@@ -160,9 +160,9 @@ Docker:
     docker buildx build \
       --file Dockerfile-x \
       --platform linux/amd64 \
-      --build-arg VERSION=4.0.0 \
+      --build-arg VERSION=4.1.1 \
       --output type=docker \
-      --tag felddy/weewx:4.0.0 .
+      --tag felddy/weewx:4.1.1 .
     ```
 
 ## Debugging ##
