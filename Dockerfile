@@ -6,7 +6,7 @@ FROM python:3-alpine as stage-1
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.0.0"
+ENV WEEWX_VERSION="4.1.1"
 ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
@@ -53,7 +53,7 @@ LABEL org.opencontainers.image.version=${VERSION}
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.0.0"
+ENV WEEWX_VERSION="4.1.1"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx

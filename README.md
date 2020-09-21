@@ -135,7 +135,11 @@ To build the container from source:
 ```console
 git clone https://github.com/felddy/weewx-docker.git
 cd weewx-docker
-docker-compose build
+docker buildx build \
+  --platform linux/amd64 \
+  --output type=docker \
+  --tag felddy/weewx .
+  --build-arg VERSION=4.1.1 \
 ```
 
 ## Cross-platform builds ##
