@@ -137,9 +137,9 @@ git clone https://github.com/felddy/weewx-docker.git
 cd weewx-docker
 docker buildx build \
   --platform linux/amd64 \
+  --build-arg VERSION=4.1.1 \
   --output type=docker \
   --tag felddy/weewx .
-  --build-arg VERSION=4.1.1 \
 ```
 
 ## Cross-platform builds ##
