@@ -128,18 +128,15 @@ services:
 | WEEWX_UID    | `uid` the daemon will be run under | weewx |
 | WEEWX_GID    | `gid` the deamon will be run under | weewx |
 
-## Building ##
+## Building from source ##
 
-To build the container from source:
+Build the image locally using this git repository as the [build context](https://docs.docker.com/engine/reference/commandline/build/#git-repositories):
 
 ```console
-git clone https://github.com/felddy/weewx-docker.git
-cd weewx-docker
-docker buildx build \
-  --platform linux/amd64 \
+docker build \
   --build-arg VERSION=4.1.1 \
-  --output type=docker \
-  --tag felddy/weewx .
+  --tag felddy/weewx:4.1.1 \
+  https://github.com/felddy/weewx-docker.git#develop
 ```
 
 ## Cross-platform builds ##
@@ -148,7 +145,15 @@ To create images that are compatible with other platforms you can use the
 [`buildx`](https://docs.docker.com/buildx/working-with-buildx/) feature of
 Docker:
 
-1. Create an new `Dockerfile-x` with `buildx` support:
+1. Copy the project to your machine using the `Clone` button above
+   or the command line:
+
+    ```console
+    git clone https://github.com/felddy/weewx-docker.git
+    cd weewx-docker
+    ```
+
+1. Create the `Dockerfile-x` file with `buildx` platform support:
 
     ```console
     ./buildx-dockerfile.sh
