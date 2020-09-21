@@ -1,17 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
 set -o nounset
 set -o errexit
-# Sha-bang cannot be /bin/bash (not available), but
-# the container's /bin/sh does support pipefail.
-# shellcheck disable=SC2039
 set -o pipefail
 
 CONF_FILE="/data/weewx.conf"
 
 # echo version before starting syslog so we don't confound our tests
 if [ "$1" = "--version" ]; then
-  su-exec weewx:weewx ./bin/weewxd --version
+  gosu weewx:weewx ./bin/weewxd --version
   exit 0
 fi
 
@@ -20,9 +17,12 @@ if [ "$(id -u)" = 0 ]; then
   ln -snf /usr/share/zoneinfo/"${TIMEZONE:-UTC}" /etc/localtime
   # start the syslog daemon as root
   /sbin/syslogd -n -S -O - &
-  # drop privileges and restart this script as weewx user
-  su-exec "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
-  exit 0
+  if [ "${WEEWX_UID:-weewx}" != 0 ]; then
+    # drop privileges and restart this script
+    echo "Switching uid:gid to ${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}"
+    gosu "${WEEWX_UID:-weewx}:${WEEWX_GID:-weewx}" "$(readlink -f "$0")" "$@"
+    exit 0
+  fi
 fi
 
 copy_default_config() {

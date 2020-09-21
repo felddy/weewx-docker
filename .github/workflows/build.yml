@@ -17,29 +17,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: 3.8
       - name: Store installed Python version
         run: |
           echo "::set-env name=PY_VERSION::"\
           "$(python -c "import platform;print(platform.python_version())")"
-      - name: Cache pip test requirements
-        uses: actions/cache@v1
+      - name: Cache linting environments
+        uses: actions/cache@v2
         with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: "${{ runner.os }}-pip-test-py${{ env.PY_VERSION }}-\
-            ${{ hashFiles('**/requirements-test.txt') }}"
-          restore-keys: |
-            ${{ runner.os }}-pip-test-py${{ env.PY_VERSION }}-
-            ${{ runner.os }}-pip-test-
-            ${{ runner.os }}-pip-
-      - name: Cache pre-commit hooks
-        uses: actions/cache@v1
-        with:
-          path: ${{ env.PRE_COMMIT_CACHE_DIR }}
-          key: "${{ runner.os }}-pre-commit-py${{ env.PY_VERSION }}-\
+          path: |
+            ${{ env.PIP_CACHE_DIR }}
+            ${{ env.PRE_COMMIT_CACHE_DIR }}
+          key: "lint-${{ runner.os }}-py${{ env.PY_VERSION }}-\
+            ${{ hashFiles('**/requirements-test.txt') }}-\
+            ${{ hashFiles('**/requirements.txt') }}-\
             ${{ hashFiles('**/.pre-commit-config.yaml') }}"
+          restore-keys: |
+            lint-${{ runner.os }}-py${{ env.PY_VERSION }}-
+            lint-${{ runner.os }}-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -61,12 +58,15 @@ jobs:
         uses: crazy-max/ghaction-docker-buildx@v1
         with:
           version: latest
+      - name: Create cross-platform support Dockerfile-x
+        run: ./buildx-dockerfile.sh
       - name: Build docker image
         run: |
           mkdir -p dist
           IFS='.' read -r -a version_array \
             <<< "${{ steps.get_ver.outputs.version }}"
           docker buildx build \
+            --file Dockerfile-x \
             --platform linux/amd64 \
             --output "type=docker,dest=dist/image.tar" \
             --tag "$IMAGE_NAME:latest" \
@@ -89,18 +89,17 @@ jobs:
     needs: [build]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - name: Cache pip test requirements
-        uses: actions/cache@v1
+      - name: Cache testing environments
+        uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: "${{ runner.os }}-pip-test-\
+          key: "test-${{ runner.os }}-\
             ${{ hashFiles('**/requirements-test.txt') }}"
           restore-keys: |
-            ${{ runner.os }}-pip-test-
-            ${{ runner.os }}-pip-
+            test-${{ runner.os }}-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -111,9 +110,8 @@ jobs:
           name: dist
       - name: Load docker image
         run: docker load < dist/image.tar.gz
-      - name: Create data volume mount
+      - name: Prepare data volume mount
         run: |
-          mkdir data
           chmod a+rwx data
       - name: Generate test configuration
         run: docker-compose run weewx --gen-test-config
@@ -121,3 +119,9 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: pytest
+      - name: Upload data artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: data
+          path: data

@@ -4,13 +4,10 @@ version: "3.7"
 volumes:
   data:
 
+# This docker-compose file is used to build and test the container
 services:
   weewx:
-    build:
-      args:
-        - VERSION=4.1.1
-      context: .
-      dockerfile: Dockerfile
+    # Run the container normally
     image: felddy/weewx:4.1.1
     init: true
     restart: "no"
@@ -24,3 +21,11 @@ services:
       - WEEWX_GID=dialout
     # devices:
     #   - "/dev/ttyUSB0:/dev/ttyUSB0"
+
+
+  weewx-version:
+    # Run the container to collect version information
+    image: felddy/weewx:4.1.1
+    init: true
+    restart: "no"
+    command: --version
