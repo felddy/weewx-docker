@@ -19,11 +19,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Store installed Python version
         run: |
-          echo "::set-env name=PY_VERSION::"\
-          "$(python -c "import platform;print(platform.python_version())")"
+          echo "PY_VERSION="\
+          "$(python -c "import platform;print(platform.python_version())")" \
+          >> $GITHUB_ENV
       - name: Cache linting environments
         uses: actions/cache@v2
         with:
@@ -80,7 +81,7 @@ jobs:
       - name: Compressing image
         run: gzip dist/image.tar
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: dist
           path: dist
@@ -91,13 +92,14 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Cache testing environments
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: "test-${{ runner.os }}-\
-            ${{ hashFiles('**/requirements-test.txt') }}"
+            ${{ hashFiles('**/requirements-test.txt') }}-\
+            ${{ hashFiles('**/requirements.txt') }}"
           restore-keys: |
             test-${{ runner.os }}-
       - name: Install dependencies
@@ -105,9 +107,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install --upgrade --requirement requirements-test.txt
       - name: Download docker image artifact
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: dist
+          path: dist
       - name: Load docker image
         run: docker load < dist/image.tar.gz
       - name: Prepare data volume mount
