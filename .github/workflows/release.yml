@@ -4,14 +4,18 @@ name: release
 on:
   release:
     types: [prereleased, released]
-
+  workflow_dispatch:
+    inputs:
+      remote-shell:
+        description: "Break with remote shell"
+        required: true
+        default: true
 env:
   IMAGE_NAME: felddy/weewx
   DOCKER_PW: ${{ secrets.DOCKER_PW }}
   DOCKER_USER: ${{ secrets.DOCKER_USER }}
   PLATFORMS: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
     linux/arm64,linux/ppc64le,linux/s390x"
-  RUN_TMATE: ${{ secrets.RUN_TMATE }}
 
 jobs:
   release:
@@ -34,6 +38,9 @@ jobs:
         run: docker login --username "$DOCKER_USER" --password "$DOCKER_PW"
       - name: Create cross-platform support Dockerfile-x
         run: ./buildx-dockerfile.sh
+      - name: Setup debug session remote shell
+        uses: mxschmitt/action-tmate@v3
+        if: github.event.inputs.remote-shell
       - name: Build Docker images, tag, and publish
         run: |
           IFS='.' read -r v_major v_minor v_patch \
@@ -52,6 +59,3 @@ jobs:
             .
       - name: Publish README.md to Docker Hub
         run: ./push_readme.sh
-      - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@v1
-        if: env.RUN_TMATE
