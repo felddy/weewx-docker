@@ -1,13 +1,15 @@
 # weewx-docker 🌩🐳 #
 
 [![GitHub Build Status](https://github.com/felddy/weewx-docker/workflows/build/badge.svg)](https://github.com/felddy/weewx-docker/actions)
+[![WeeWX Version](https://img.shields.io/github/v/release/felddy/weewx-docker?color=brightgreen)](https://hub.docker.com/r/felddy/weewx)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/felddy/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/felddy/weewx-docker/alerts/)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/felddy/weewx-docker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/felddy/weewx-docker/context:python)
 
-## Docker Image ##
+[![Docker Pulls](https://img.shields.io/docker/pulls/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
+[![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
+[![Platforms](https://img.shields.io/badge/platforms-386%20%7C%20amd64%20%7C%20arm%2Fv6%20%7C%20arm%2Fv7%20%7C%20arm64%20%7C%20ppc64le%20%7C%20s390x-blue)](https://hub.docker.com/r/felddy/weewx/tags)
 
-[![MicroBadger Version](https://images.microbadger.com/badges/version/felddy/weewx.svg)](https://hub.docker.com/repository/docker/felddy/weewx)
-![MicroBadger Layers](https://img.shields.io/microbadger/layers/felddy/weewx.svg)
+## Docker Image ##
 
 This docker container can be used to quickly get a
 [WeeWX](http://weewx.com) instance up and running.
