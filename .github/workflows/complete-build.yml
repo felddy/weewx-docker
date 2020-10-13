@@ -18,6 +18,7 @@ on:
         required: true
         default: true
 env:
+  BUILDX_CACHE_DIR: ~/.cache/buildx
   IMAGE_NAME: felddy/weewx
   PIP_CACHE_DIR: ~/.cache/pip
   PLATFORMS: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
@@ -121,7 +122,7 @@ jobs:
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
+          path: ${{ env.BUILDX_CACHE_DIR }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
@@ -133,6 +134,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
+          cache-from: type=local,src=${{ env.BUILDX_CACHE_DIR }}
+          cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }}
           context: .
           file: ./Dockerfile-x
           outputs: "type=tar,dest=dist/image.tar"
@@ -241,7 +244,7 @@ jobs:
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
+          path: ${{ env.BUILDX_CACHE_DIR }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
@@ -251,6 +254,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
+          cache-from: type=local,src=${{ env.BUILDX_CACHE_DIR }}
+          cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }}
           context: .
           file: ./Dockerfile-x
           platforms: ${{ env.PLATFORMS }}
