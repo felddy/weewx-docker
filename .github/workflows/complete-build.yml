@@ -138,7 +138,7 @@ jobs:
           cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }}
           context: .
           file: ./Dockerfile-x
-          outputs: "type=tar,dest=dist/image.tar"
+          load: true
           platforms: ${{ env.PLATFORMS }}
           push: false  # not until after tests run
           tags: ${{ needs.prepare.outputs.tags }}
@@ -165,6 +165,10 @@ jobs:
 
             org.opencontainers.image.version=${{
               needs.prepare.outputs.version }}"
+      - name: Save image for testing
+        run: >
+          docker save ${IMAGE_NAME}:${{ needs.prepare.outputs.version }}
+          --output dist/image.tar
       - name: Compressing images tarball
         run: gzip dist/image.tar
       - name: Upload artifacts
