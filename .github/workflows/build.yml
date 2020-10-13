@@ -19,6 +19,10 @@ on:
         description: "Debug with remote shell"
         required: true
         default: true
+      image-tag:
+        description: "Tag to apply to pushed images"
+        required: true
+        default: dispatch
 env:
   BUILDX_CACHE_DIR: ~/.cache/buildx
   IMAGE_NAME: felddy/weewx
@@ -86,7 +90,7 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ]; then
             VERSION=nightly
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION=dispatch
+            VERSION=${{ github.event.inputs.image-tag }}
           elif [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           elif [[ $GITHUB_REF == refs/heads/* ]]; then
@@ -111,7 +115,7 @@ jobs:
           echo ::set-output name=tags::${TAGS}
       - name: Setup debug session remote shell
         uses: mxschmitt/action-tmate@v3
-        if: github.event.inputs.remote-shell
+        if: github.event.inputs.remote-shell == 'true'
   build-one:
     name: "Build test image"
     runs-on: ubuntu-latest
