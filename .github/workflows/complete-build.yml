@@ -1,5 +1,5 @@
 ---
-name: "Complete Build"
+name: build
 # https://github.com/docker/build-push-action#complete-workflow
 
 on:
@@ -11,10 +11,12 @@ on:
   pull_request:
   schedule:
     - cron: '0 10 * * *'  # everyday at 10am
+  repository_dispatch:
+    types: [apb]
   workflow_dispatch:
     inputs:
       remote-shell:
-        description: "Break with remote shell"
+        description: "Debug with remote shell"
         required: true
         default: true
 env:
@@ -61,29 +63,29 @@ jobs:
       - name: Run pre-commit on all files
         run: pre-commit run --all-files
   prepare:
-    name: "Prepare variables"
+    name: "Prepare build variables"
     runs-on: ubuntu-latest
     outputs:
       created: ${{ steps.prep.outputs.created }}
       repometa: ${{ steps.repo.outputs.result }}
+      source_version: ${{ steps.prep.outputs.source_version }}
       tags: ${{ steps.prep.outputs.tags }}
-      version: ${{ steps.prep.outputs.version }}
     steps:
-      - name: Gather repo metadata
+      - name: Gather repository metadata
         id: repo
         uses: actions/github-script@v3
         with:
           script: |
             const repo = await github.repos.get(context.repo)
             return repo.data
-      - name: Calculate version, tags, and created timestamp
+      - name: Calculate output values
         id: prep
         run: |
           VERSION=noop
           if [ "${{ github.event_name }}" = "schedule" ]; then
             VERSION=nightly
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION=test
+            VERSION=dispatch
           elif [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           elif [[ $GITHUB_REF == refs/heads/* ]]; then
@@ -104,8 +106,8 @@ jobs:
             TAGS="$TAGS,${IMAGE_NAME}:sha-${GITHUB_SHA::8}"
           fi
           echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo ::set-output name=source_version::$(./bump_version.sh show)
           echo ::set-output name=tags::${TAGS}
-          echo ::set-output name=version::${VERSION}
       - name: Setup debug session remote shell
         uses: mxschmitt/action-tmate@v3
         if: github.event.inputs.remote-shell
@@ -163,7 +165,7 @@ jobs:
               fromJson(needs.prepare.outputs.repometa).html_url }}
 
             org.opencontainers.image.version=${{
-              needs.prepare.outputs.version }}"
+              needs.prepare.outputs.source_version }}"
       - name: Compressing image
         run: gzip dist/image.tar
       - name: Upload artifacts
@@ -223,7 +225,6 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
@@ -245,7 +246,7 @@ jobs:
             ${{ runner.os }}-buildx-
       - name: Create cross-platform support Dockerfile-x
         run: ./buildx-dockerfile.sh
-      - name: Push images
+      - name: Build and push platform images to Docker Hub
         id: docker_build
         uses: docker/build-push-action@v2
         with:
@@ -278,4 +279,6 @@ jobs:
               fromJson(needs.prepare.outputs.repometa).html_url }}
 
             org.opencontainers.image.version=${{
-              needs.prepare.outputs.version }}"
+              needs.prepare.outputs.source_version }}"
+      - name: Publish README.md to Docker Hub
+        run: ./push_readme.sh
