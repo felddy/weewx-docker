@@ -140,7 +140,6 @@ jobs:
           context: .
           file: ./Dockerfile
           outputs: type=docker,dest=dist/image.tar
-          tags: ${{ needs.prepare.outputs.tags }}
           labels: "\
             org.opencontainers.image.created=${{
               needs.prepare.outputs.created }}
@@ -204,7 +203,8 @@ jobs:
         run: |
           chmod a+rwx data
       - name: Generate test configuration
-        run: docker-compose run weewx --gen-test-config
+        run: docker-compose --file docker-compose-pytest.yml
+             run weewx --gen-test-config
       - name: Run tests
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}

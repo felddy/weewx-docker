@@ -1,5 +1,5 @@
 ---
-version: "3.7"
+version: "3.8"
 
 volumes:
   data:
@@ -8,7 +8,7 @@ volumes:
 services:
   weewx:
     # Run the container normally
-    image: felddy/weewx:4.1.1
+    image: felddy/weewx
     init: true
     restart: "no"
     volumes:
@@ -25,7 +25,7 @@ services:
 
   weewx-version:
     # Run the container to collect version information
-    image: felddy/weewx:4.1.1
+    image: felddy/weewx
     init: true
     restart: "no"
     command: --version
