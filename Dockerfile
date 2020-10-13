@@ -40,6 +40,7 @@ ARG TARGETPLATFORM
 
 LABEL org.opencontainers.image.authors="markf+github@geekpad.com"
 LABEL org.opencontainers.image.vendor="Geekpad"
+LABEL com.weewx.version=${WEEWX_VERSION}
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
