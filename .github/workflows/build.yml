@@ -71,6 +71,7 @@ jobs:
       source_version: ${{ steps.prep.outputs.source_version }}
       tags: ${{ steps.prep.outputs.tags }}
     steps:
+      - uses: actions/checkout@v2
       - name: Gather repository metadata
         id: repo
         uses: actions/github-script@v3
