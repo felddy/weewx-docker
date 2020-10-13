@@ -104,10 +104,11 @@ jobs:
             VERSION=pr-${{ github.event.number }}
           fi
           if [[ $VERSION =~ $SEMVER ]]; then
+            VERSION_NO_V=${VERSION#v}
             MAJOR="${BASH_REMATCH[1]}"
             MINOR="${BASH_REMATCH[2]}"
             PATCH="${BASH_REMATCH[3]}"
-            TAGS="${IMAGE_NAME}:${MAJOR}.${MINOR}.${PATCH},${IMAGE_NAME}:${MAJOR}.${MINOR},${IMAGE_NAME}:${MAJOR},${IMAGE_NAME}:latest"
+            TAGS="${IMAGE_NAME}:${VERSION_NO_V//+/_},${IMAGE_NAME}:${MAJOR}.${MINOR}.${PATCH},${IMAGE_NAME}:${MAJOR}.${MINOR},${IMAGE_NAME}:${MAJOR},${IMAGE_NAME}:latest"
           else
             TAGS="${IMAGE_NAME}:${VERSION}"
           fi
