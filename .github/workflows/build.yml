@@ -205,8 +205,10 @@ jobs:
         with:
           name: dist
           path: dist
-      - name: Load docker image
+      - name: Load Docker image
         run: docker load < dist/image.tar.gz
+      - name: Inspect Docker image
+        run: docker image inspect ${IMAGE_NAME}
       - name: Prepare data volume mount
         run: |
           chmod a+rwx data
