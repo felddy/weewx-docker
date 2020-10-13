@@ -282,4 +282,7 @@ jobs:
             org.opencontainers.image.version=${{
               needs.prepare.outputs.source_version }}"
       - name: Publish README.md to Docker Hub
+        env:
+          DOCKER_PW: ${{ secrets.DOCKER_PW }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
         run: ./push_readme.sh
