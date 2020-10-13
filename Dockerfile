@@ -37,14 +37,13 @@ COPY src/entrypoint.sh src/version.txt ./
 FROM python:3-slim as stage-2
 
 ARG TARGETPLATFORM
+ARG WEEWX_UID=421
+ENV WEEWX_HOME="/home/weewx"
+ENV WEEWX_VERSION="4.1.1"
 
 LABEL org.opencontainers.image.authors="markf+github@geekpad.com"
 LABEL org.opencontainers.image.vendor="Geekpad"
 LABEL com.weewx.version=${WEEWX_VERSION}
-
-ARG WEEWX_UID=421
-ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.1.1"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
