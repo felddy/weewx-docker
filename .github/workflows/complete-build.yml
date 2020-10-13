@@ -140,7 +140,7 @@ jobs:
           context: .
           file: ./Dockerfile
           outputs: type=docker,dest=dist/image.tar
-          tags: ${IMAGE_NAME}:latest  # not to be pushed
+          tags: ${{ env.IMAGE_NAME }}:latest  # not to be pushed
           labels: "\
             org.opencontainers.image.created=${{
               needs.prepare.outputs.created }}
