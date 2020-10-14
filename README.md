@@ -15,6 +15,7 @@ This container has the following WeeWX extensions installed:
 
 - [interceptor](https://github.com/matthewwall/weewx-interceptor)
 - [mqtt](https://github.com/weewx/weewx/wiki/mqtt)
+- [mysql](https://www.weewx.com/docs/usersguide.htm#configuring_mysql)
 
 ## Running ##
 

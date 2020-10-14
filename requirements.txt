@@ -1,5 +1,6 @@
 configobj
 paho-mqtt
+pymysql
 pyserial
 pyusb
 setuptools

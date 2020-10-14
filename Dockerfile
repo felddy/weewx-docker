@@ -10,6 +10,13 @@ RUN addgroup --system --gid ${WEEWX_UID} weewx \
 
 RUN apk --no-cache add tar
 
+RUN apk add --no-cache mariadb-connector-c-dev ;\
+    apk add --no-cache --virtual .build-deps \
+        build-base \
+        mariadb-dev ;\
+    pip install mysqlclient;\
+    apk del .build-deps
+
 WORKDIR /tmp
 COPY src/hashes requirements.txt ./
 
@@ -51,7 +58,7 @@ LABEL com.weewx.version=${WEEWX_VERSION}
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apt-get update && apt-get install -y libusb-1.0-0 gosu busybox-syslogd tzdata
+RUN apt-get update && apt-get install -y libusb-1.0-0 gosu busybox-syslogd tzdata mariadb-client
 
 WORKDIR ${WEEWX_HOME}
 
