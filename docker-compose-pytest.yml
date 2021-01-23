@@ -11,6 +11,8 @@ services:
     image: felddy/weewx
     init: true
     restart: "no"
+    # devices:
+    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
     volumes:
       - type: bind
         source: ./data
@@ -19,8 +21,6 @@ services:
       - TIMEZONE=US/Eastern
       - WEEWX_UID=weewx
       - WEEWX_GID=dialout
-    # devices:
-    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
 
 
   weewx-version:
