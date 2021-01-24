@@ -7,9 +7,7 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
 [![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
-[![Platforms](https://img.shields.io/badge/platforms-386%20%7C%20amd64%20%7C%20arm%2Fv6%20%7C%20arm%2Fv7%20%7C%20arm64%20%7C%20ppc64le%20%7C%20s390x-blue)](https://hub.docker.com/r/felddy/weewx/tags)
-
-## Docker Image ##
+[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm%2Fv6%20%7C%20arm%2Fv7%20%7C%20arm64%20%7C%20ppc64le%20%7C%20s390x-blue)](https://hub.docker.com/r/felddy/weewx/tags)
 
 This docker container can be used to quickly get a
 [WeeWX](http://weewx.com) instance up and running.
@@ -137,7 +135,7 @@ Build the image locally using this git repository as the [build context](https:/
 
 ```console
 docker build \
-  --tag felddy/weewx:4.1.1 \
+  --tag felddy/weewx:4.3.0 \
   https://github.com/felddy/weewx-docker.git#develop
 ```
 
@@ -168,7 +166,7 @@ Docker:
       --file Dockerfile-x \
       --platform linux/amd64 \
       --output type=docker \
-      --tag felddy/weewx:4.1.1 .
+      --tag felddy/weewx:4.3.0 .
     ```
 
 ## Debugging ##
@@ -183,9 +181,16 @@ in your environment.
 | Generate a test (simulator) configuration | `docker-compose run weewx --gen-test-config` |
 | Drop into a shell in the container | `docker-compose run weewx --shell` |
 
+## New Repositories from a Skeleton ##
+
+Please see our [Project Setup guide](https://github.com/cisagov/development-guide/tree/develop/project_setup)
+for step-by-step instructions on how to start a new repository from
+a skeleton. This will save you time and effort when configuring a
+new repository!
+
 ## Contributing ##
 
-We welcome contributions!  Please see [here](CONTRIBUTING.md) for
+We welcome contributions!  Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
 details.
 
 ## License ##

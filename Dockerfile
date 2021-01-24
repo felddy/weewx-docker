@@ -2,7 +2,7 @@ FROM python:3-alpine as stage-1
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.1.1"
+ENV WEEWX_VERSION="4.3.0"
 ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
@@ -39,8 +39,11 @@ FROM python:3-slim as stage-2
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.1.1"
+ENV WEEWX_VERSION="4.3.0"
 
+# For a list of pre-defined annotation keys and value types see:
+# https://github.com/opencontainers/image-spec/blob/master/annotations.md
+# Note: Additional labels are added by the build workflow.
 LABEL org.opencontainers.image.authors="markf+github@geekpad.com"
 LABEL org.opencontainers.image.vendor="Geekpad"
 LABEL com.weewx.version=${WEEWX_VERSION}

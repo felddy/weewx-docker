@@ -12,52 +12,53 @@ on:
   schedule:
     - cron: '0 10 * * *'  # everyday at 10am
   repository_dispatch:
+    # Respond to rebuild requests. See: https://github.com/cisagov/action-apb/
     types: [apb]
   workflow_dispatch:
     inputs:
       remote-shell:
         description: "Debug with remote shell"
         required: true
-        default: true
+        default: false
       image-tag:
         description: "Tag to apply to pushed images"
         required: true
         default: dispatch
+
 env:
   BUILDX_CACHE_DIR: ~/.cache/buildx
   IMAGE_NAME: felddy/weewx
   PIP_CACHE_DIR: ~/.cache/pip
-  PLATFORMS: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,\
-    linux/arm64,linux/ppc64le,linux/s390x"
+  PLATFORMS: "linux/amd64,linux/arm/v6,linux/arm/v7,\
+  linux/arm64,linux/ppc64le,linux/s390x"
   PRE_COMMIT_CACHE_DIR: ~/.cache/pre-commit
 
 jobs:
   lint:
+    # Checks out the source and runs pre-commit hooks.  Detects coding errors
+    # and style deviations.
     name: "Lint sources"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - id: setup-python
+        uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - name: Store installed Python version
-        run: |
-          echo "PY_VERSION="\
-          "$(python -c "import platform;print(platform.python_version())")" \
-          >> $GITHUB_ENV
-      - name: Cache linting environments
-        uses: actions/cache@v2
+      - uses: actions/cache@v2
+        env:
+          BASE_CACHE_KEY: "${{ github.job }}-${{ runner.os }}-\
+            py${{ steps.setup-python.outputs.python-version }}-"
         with:
           path: |
             ${{ env.PIP_CACHE_DIR }}
             ${{ env.PRE_COMMIT_CACHE_DIR }}
-          key: "lint-${{ runner.os }}-py${{ env.PY_VERSION }}-\
+          key: "${{ env.BASE_CACHE_KEY }}\
             ${{ hashFiles('**/requirements-test.txt') }}-\
             ${{ hashFiles('**/requirements.txt') }}-\
             ${{ hashFiles('**/.pre-commit-config.yaml') }}"
           restore-keys: |
-            lint-${{ runner.os }}-py${{ env.PY_VERSION }}-
-            lint-${{ runner.os }}-
+            ${{ env.BASE_CACHE_KEY }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -66,7 +67,48 @@ jobs:
         run: pre-commit install-hooks
       - name: Run pre-commit on all files
         run: pre-commit run --all-files
+
   prepare:
+    # Calculates and publishes outputs that are used by other jobs.
+    #
+    # Outputs:
+    #   created:
+    #     The current date-time in RFC3339 format.
+    #   repometa:
+    #     The json metadata describing this repository.
+    #   source_version:
+    #     The source version as reported by the `bump_version.sh show` command.
+    #   tags:
+    #     A comma separated list of Docker tags to be applied to the images on
+    #     DockerHub.  The tags will vary depending on:
+    #     - The event that triggered the build.
+    #     - The branch the build is based upon.
+    #     - The git tag the build is based upon.
+    #
+    #     When a build is based on a git tag of the form `v*.*.*` the image will
+    #     be tagged on DockerHub with multiple levels of version specificity.
+    #     For example, a git tag of `v1.2.3+a` will generate Docker tags of
+    #     `:1.2.3_a`, `:1.2.3`, `:1.2`, `:1`, and `:latest`.
+    #
+    #     Builds targeting the default branch will be tagged with `:edge`.
+    #
+    #     Builds from other branches will be tagged with the branch name. Solidi
+    #     (`/` characters - commonly known as slashes) in branch names are
+    #     replaced with hyphen-minuses (`-` characters) in the Docker tag.  For
+    #     more information about the solidus see these links:
+    #       * https://www.compart.com/en/unicode/U+002F
+    #       * https://en.wikipedia.org/wiki/Slash_(punctuation)#Encoding
+    #
+    #     Builds triggered by a push event are tagged with a short hash in the
+    #     form: sha-12345678
+    #
+    #     Builds triggered by a pull request are tagged with the pull request
+    #     number in the form pr-123.
+    #
+    #     Builds triggered using the GitHub GUI (workflow_dispatch) are tagged
+    #     with the value specified by the user.
+    #
+    #     Scheduled builds are tagged with `:nightly`.
     name: "Prepare build variables"
     runs-on: ubuntu-latest
     outputs:
@@ -122,7 +164,10 @@ jobs:
       - name: Setup debug session remote shell
         uses: mxschmitt/action-tmate@v3
         if: github.event.inputs.remote-shell == 'true'
-  build-one:
+
+  build:
+    # Builds a single test image for the native platform.  This image is saved
+    # as an artifact and loaded by the test job.
     name: "Build test image"
     runs-on: ubuntu-latest
     needs: [prepare]
@@ -133,27 +178,31 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          driver-opts: image=moby/buildkit:buildx-stable-1
       - name: Cache Docker layers
         uses: actions/cache@v2
+        env:
+          BASE_CACHE_KEY: buildx-${{ runner.os }}-
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ env.BASE_CACHE_KEY }}${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ env.BASE_CACHE_KEY }}
       - name: Create dist directory
         run: mkdir -p dist
-      - name: Build images
+      - name: Build image
         id: docker_build
         uses: docker/build-push-action@v2
         with:
+          build-args: |
+            VERSION=${{ needs.prepare.outputs.source_version }}
           cache-from: type=local,src=${{ env.BUILDX_CACHE_DIR }}
           cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }}
           context: .
           file: ./Dockerfile
           outputs: type=docker,dest=dist/image.tar
           tags: ${{ env.IMAGE_NAME }}:latest  # not to be pushed
+          # For a list of pre-defined annotation keys and value types see:
+          # https://github.com/opencontainers/image-spec/blob/master/annotations.md
           labels: "\
             org.opencontainers.image.created=${{
               needs.prepare.outputs.created }}
@@ -177,31 +226,37 @@ jobs:
 
             org.opencontainers.image.version=${{
               needs.prepare.outputs.source_version }}"
-      - name: Compressing image
+      - name: Compress image
         run: gzip dist/image.tar
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: dist
           path: dist
+
   test:
+    # Executes tests on the single-platform image created in the "build" job.
     name: "Test image"
     runs-on: ubuntu-latest
-    needs: [build-one]
+    needs: [build]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - id: setup-python
+        uses: actions/setup-python@v2
         with:
           python-version: 3.9
       - name: Cache testing environments
         uses: actions/cache@v2
+        env:
+          BASE_CACHE_KEY: "${{ github.job }}-${{ runner.os }}-\
+            py${{ steps.setup-python.outputs.python-version }}-"
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: "test-${{ runner.os }}-\
+          key: "${{ env.BASE_CACHE_KEY }}\
             ${{ hashFiles('**/requirements-test.txt') }}-\
             ${{ hashFiles('**/requirements.txt') }}"
           restore-keys: |
-            test-${{ runner.os }}-
+            ${{ env.BASE_CACHE_KEY }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -224,45 +279,47 @@ jobs:
       - name: Run tests
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: pytest
-      - name: Upload data artifacts
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: data
-          path: data
+        run: pytest --runslow
+
   build-push-all:
+    # Builds the final set of images for each of the platforms listed in
+    # PLATFORMS environment variable.  These images are tagged with the Docker
+    # tags calculated in the "prepare" job and pushed to DockerHub.  The
+    # contents of README.md is pushed as the image's description.  This job is
+    # skipped when the triggering event is a pull request.
     name: "Build and push all platforms"
     runs-on: ubuntu-latest
-    needs: [prepare, test]
+    needs: [lint, prepare, test]
     if: github.event_name != 'pull_request'
     steps:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PW }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Checkout
         uses: actions/checkout@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          driver-opts: image=moby/buildkit:buildx-stable-1
       - name: Cache Docker layers
         uses: actions/cache@v2
+        env:
+          BASE_CACHE_KEY: buildx-${{ runner.os }}-
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ env.BASE_CACHE_KEY }}${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ env.BASE_CACHE_KEY }}
       - name: Create cross-platform support Dockerfile-x
         run: ./buildx-dockerfile.sh
       - name: Build and push platform images to Docker Hub
         id: docker_build
         uses: docker/build-push-action@v2
         with:
+          build-args: |
+            VERSION=${{ needs.prepare.outputs.source_version }}
           cache-from: type=local,src=${{ env.BUILDX_CACHE_DIR }}
           cache-to: type=local,dest=${{ env.BUILDX_CACHE_DIR }}
           context: .
@@ -270,6 +327,8 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           push: true
           tags: ${{ needs.prepare.outputs.tags }}
+          # For a list of pre-defined annotation keys and value types see:
+          # https://github.com/opencontainers/image-spec/blob/master/annotations.md
           labels: "\
             org.opencontainers.image.created=${{
               needs.prepare.outputs.created }}
@@ -295,6 +354,6 @@ jobs:
               needs.prepare.outputs.source_version }}"
       - name: Publish README.md to Docker Hub
         env:
-          DOCKER_PW: ${{ secrets.DOCKER_PW }}
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: ./push_readme.sh

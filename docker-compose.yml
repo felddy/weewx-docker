@@ -8,12 +8,14 @@ services:
   weewx:
     build:
       args:
-        - VERSION=4.1.1
+        - VERSION=4.3.0
       context: .
       dockerfile: Dockerfile
-    image: felddy/weewx:4.1.1
+    image: felddy/weewx:4.3.0
     init: true
     restart: "no"
+    # devices:
+    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
     volumes:
       - type: bind
         source: ./data
@@ -22,5 +24,3 @@ services:
       - TIMEZONE=US/Eastern
       - WEEWX_UID=weewx
       - WEEWX_GID=dialout
-    # devices:
-    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
