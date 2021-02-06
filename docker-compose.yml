@@ -8,10 +8,10 @@ services:
   weewx:
     build:
       args:
-        - VERSION=4.3.0
+        - VERSION=4.4.0
       context: .
       dockerfile: Dockerfile
-    image: felddy/weewx:4.3.0
+    image: felddy/weewx:4.4.0
     init: true
     restart: "no"
     # devices:
