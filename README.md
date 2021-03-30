@@ -118,15 +118,15 @@ services:
 
 | Mount point | Purpose        |
 |-------------|----------------|
-| /data    | configuration file and sqlite database storage |
+| `/data`     | configuration file and sqlite database storage |
 
 ## Environment Variables ##
 
-| Mount point  | Purpose | Default |
-|--------------|---------|---------|
-| TIMEZONE     | Container [TZ database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) | UTC |
-| WEEWX_UID    | `uid` the daemon will be run under | weewx |
-| WEEWX_GID    | `gid` the deamon will be run under | weewx |
+| Variable       | Purpose | Default |
+|----------------|---------|---------|
+| `TIMEZONE`     | Container [TZ database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) | `UTC` |
+| `WEEWX_UID`    | `uid` the daemon will be run under | `weewx` |
+| `WEEWX_GID`    | `gid` the deamon will be run under | `weewx` |
 
 ## Building from source ##
 
