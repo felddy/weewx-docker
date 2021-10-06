@@ -34,7 +34,7 @@ RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
 COPY src/entrypoint.sh src/version.txt ./
 
-FROM python:3-slim as stage-2
+FROM python:3.10.0-slim as stage-2
 
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
@@ -59,7 +59,7 @@ COPY --from=stage-1 /opt/venv /opt/venv
 COPY --from=stage-1 ${WEEWX_HOME} ${WEEWX_HOME}
 
 RUN mkdir /data && \
-    cp weewx.conf /data
+  cp weewx.conf /data
 
 VOLUME ["/data"]
 
