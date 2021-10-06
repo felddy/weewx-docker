@@ -2,7 +2,7 @@ FROM python:3-alpine as stage-1
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.4.0"
+ENV WEEWX_VERSION="4.5.1"
 ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
@@ -39,7 +39,7 @@ FROM python:3-slim as stage-2
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.4.0"
+ENV WEEWX_VERSION="4.5.1"
 
 # For a list of pre-defined annotation keys and value types see:
 # https://github.com/opencontainers/image-spec/blob/master/annotations.md
@@ -59,7 +59,7 @@ COPY --from=stage-1 /opt/venv /opt/venv
 COPY --from=stage-1 ${WEEWX_HOME} ${WEEWX_HOME}
 
 RUN mkdir /data && \
-    cp weewx.conf /data
+  cp weewx.conf /data
 
 VOLUME ["/data"]
 
