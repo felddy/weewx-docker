@@ -13,12 +13,12 @@ This docker container can be used to quickly get a
 
 This container has the following WeeWX extensions installed:
 
-* [interceptor](https://github.com/matthewwall/weewx-interceptor)
-* [mqtt](https://github.com/weewx/weewx/wiki/mqtt)
+- [interceptor](https://github.com/matthewwall/weewx-interceptor)
+- [mqtt](https://github.com/weewx/weewx/wiki/mqtt)
 
-## Usage ##
+## Running ##
 
-### Install ###
+### Running with Docker ###
 
 Pull `felddy/weewx` from the Docker repository:
 
@@ -180,7 +180,7 @@ in your environment.
 | Generate a test (simulator) configuration | `docker-compose run weewx --gen-test-config` |
 | Drop into a shell in the container | `docker-compose run weewx --shell` |
 
-## New Repositories from a Skeleton ##
+## New repositories from a skeleton ##
 
 Please see our [Project Setup guide](https://github.com/cisagov/development-guide/tree/develop/project_setup)
 for step-by-step instructions on how to start a new repository from
