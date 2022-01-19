@@ -1,4 +1,4 @@
-FROM python:3-alpine as stage-1
+FROM python:3.10.2-alpine3.15 as install-weewx-stage
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
@@ -34,7 +34,7 @@ RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
 COPY src/entrypoint.sh src/version.txt ./
 
-FROM python:3-slim as stage-2
+FROM python:3.10.2-slim-bullseye as final-stage
 
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
@@ -55,8 +55,8 @@ RUN apt-get update && apt-get install -y libusb-1.0-0 gosu busybox-syslogd tzdat
 
 WORKDIR ${WEEWX_HOME}
 
-COPY --from=stage-1 /opt/venv /opt/venv
-COPY --from=stage-1 ${WEEWX_HOME} ${WEEWX_HOME}
+COPY --from=install-weewx-stage /opt/venv /opt/venv
+COPY --from=install-weewx-stage ${WEEWX_HOME} ${WEEWX_HOME}
 
 RUN mkdir /data && \
   cp weewx.conf /data
