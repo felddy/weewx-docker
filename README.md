@@ -180,6 +180,15 @@ in your environment.
 | Generate a test (simulator) configuration | `docker-compose run weewx --gen-test-config` |
 | Drop into a shell in the container | `docker-compose run weewx --shell` |
 
+## Running on QNAP (V5) with Containter station ##
+
+Login using ssh and run
+```
+sudo modprobe cp210x.ko
+docker run --init -d --name="WeewxWeatherstation" -v /share/Docker\ Storage/Weewx:/data -v /dev/ttyUSB0:/dev/ttyUSB0 --user=root -e TIMEZONE=Europe/Amsterdam -e WEEWX_UID=0 -e WEEWX_GID=0 --net=bridge --privileged felddy/weewx:latest
+```
+After a reboot you should probally run modprobe again before starting the container.
+
 ## New repositories from a skeleton ##
 
 Please see our [Project Setup guide](https://github.com/cisagov/development-guide/tree/develop/project_setup)
