@@ -184,6 +184,7 @@ in your environment.
 
 Login using ssh and run
 ```
+mknod /dev/ttyUSB0 c 188 0
 sudo modprobe cp210x.ko
 docker run --init -d --name="WeewxWeatherstation" -v /share/Docker\ Storage/Weewx:/data -v /dev/ttyUSB0:/dev/ttyUSB0 --user=root -e TIMEZONE=Europe/Amsterdam -e WEEWX_UID=0 -e WEEWX_GID=0 --net=bridge --privileged felddy/weewx:latest
 ```
