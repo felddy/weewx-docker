@@ -9,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: felddy/weewx:4.5.1
+    image: felddy/weewx:4.8.0
     init: true
     restart: "no"
     # devices:
