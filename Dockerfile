@@ -2,7 +2,7 @@ FROM python:3.10.2-alpine3.15 as install-weewx-stage
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.5.1"
+ENV WEEWX_VERSION="4.8.0"
 ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
 
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
@@ -14,7 +14,7 @@ WORKDIR /tmp
 COPY src/hashes requirements.txt ./
 
 # Download sources and verify hashes
-RUN wget -O "${ARCHIVE}" "http://www.weewx.com/downloads/released_versions/${ARCHIVE}"
+RUN wget -O "${ARCHIVE}" "https://weewx.com/downloads/released_versions/${ARCHIVE}"
 RUN wget -O weewx-mqtt.zip https://github.com/matthewwall/weewx-mqtt/archive/master.zip
 RUN wget -O weewx-interceptor.zip https://github.com/matthewwall/weewx-interceptor/archive/master.zip
 RUN sha256sum -c < hashes
@@ -39,7 +39,7 @@ FROM python:3.10.2-slim-bullseye as final-stage
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.5.1"
+ENV WEEWX_VERSION="4.8.0"
 
 # For a list of pre-defined annotation keys and value types see:
 # https://github.com/opencontainers/image-spec/blob/master/annotations.md
