@@ -46,7 +46,7 @@ jobs:
         uses: cisagov/setup-env-github-action@develop
       - uses: actions/checkout@v3
       - id: setup-python
-        uses: actions/setup-python@v3.1.0
+        uses: actions/setup-python@v3.1.2
         with:
           python-version: 3.9
       # We need the Go version and Go cache location for the actions/cache step,
@@ -306,7 +306,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: setup-python
-        uses: actions/setup-python@v3.1.0
+        uses: actions/setup-python@v3.1.2
         with:
           python-version: 3.9
       - name: Cache testing environments
