@@ -8,7 +8,7 @@ volumes:
 services:
   weewx:
     # Run the container normally
-    image: felddy/weewx
+    image: felddy/weewx:latest
     init: true
     restart: "no"
     # devices:
