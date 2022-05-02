@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@34cbc43f0b10c9dda284e663cf43c2ebaf83e956
+        uses: step-security/harden-runner@248ae51c2e8cc9622ecf50685c8bf7150c6e8813
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
@@ -160,7 +160,7 @@ jobs:
       tags: ${{ steps.prep.outputs.tags }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@34cbc43f0b10c9dda284e663cf43c2ebaf83e956
+        uses: step-security/harden-runner@248ae51c2e8cc9622ecf50685c8bf7150c6e8813
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
@@ -235,7 +235,7 @@ jobs:
     needs: [prepare]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@34cbc43f0b10c9dda284e663cf43c2ebaf83e956
+        uses: step-security/harden-runner@248ae51c2e8cc9622ecf50685c8bf7150c6e8813
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
@@ -311,7 +311,7 @@ jobs:
     needs: [build]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@34cbc43f0b10c9dda284e663cf43c2ebaf83e956
+        uses: step-security/harden-runner@248ae51c2e8cc9622ecf50685c8bf7150c6e8813
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
@@ -378,7 +378,7 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@34cbc43f0b10c9dda284e663cf43c2ebaf83e956
+        uses: step-security/harden-runner@248ae51c2e8cc9622ecf50685c8bf7150c6e8813
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
