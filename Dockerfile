@@ -34,7 +34,7 @@ RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
 COPY src/entrypoint.sh src/version.txt ./
 
-FROM python:3.10.4-slim-bullseye as final-stage
+FROM python:slim-bullseye as final-stage
 
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
