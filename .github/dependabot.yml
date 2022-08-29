@@ -5,19 +5,26 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    labels:
+      - "bot :robot:"
+      - "dependencies :game_die:"
+      - "docker :whale:"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    labels:
+      - "bot :robot:"
+      - "dependencies :game_die:"
+      - "github-actions :octocat:"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "terraform"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+      interval: "daily"
+    labels:
+      - "bot :robot:"
+      - "dependencies :game_die:"
+      - "python :snake:"
