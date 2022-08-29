@@ -54,7 +54,7 @@ jobs:
 
       - id: setup-env
         uses: cisagov/setup-env-github-action@a1913cd974407cd92d5b015342aa6d28d36539b8
-      - uses: actions/checkout@3df53dd32d858478710a6127bcd8b9d8b7182e16
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - id: setup-python
         uses: actions/setup-python@98f2ad02fd48d057ee3b4d4f66525b231c3e52b6
         with:
@@ -165,10 +165,10 @@ jobs:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
 
-      - uses: actions/checkout@3df53dd32d858478710a6127bcd8b9d8b7182e16
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - name: Gather repository metadata
         id: repo
-        uses: actions/github-script@7f4e771d2b3022fa3b8bac499d4a547619f3ab10
+        uses: actions/github-script@c713e510dbd7d213d92d41b7a7805a986f4c5c66
         with:
           script: |
             const repo = await github.rest.repos.get(context.repo)
@@ -241,7 +241,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@3df53dd32d858478710a6127bcd8b9d8b7182e16
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - name: Set up QEMU
         uses: docker/setup-qemu-action@8b122486cedac8393e77aa9734c3528886e4a1a8
       - name: Set up Docker Buildx
@@ -316,7 +316,7 @@ jobs:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
 
-      - uses: actions/checkout@3df53dd32d858478710a6127bcd8b9d8b7182e16
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - id: setup-python
         uses: actions/setup-python@98f2ad02fd48d057ee3b4d4f66525b231c3e52b6
         with:
@@ -395,7 +395,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout
-        uses: actions/checkout@3df53dd32d858478710a6127bcd8b9d8b7182e16
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - name: Set up QEMU
         uses: docker/setup-qemu-action@8b122486cedac8393e77aa9734c3528886e4a1a8
       - name: Set up Docker Buildx
