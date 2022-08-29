@@ -168,7 +168,7 @@ jobs:
       - uses: actions/checkout@3df53dd32d858478710a6127bcd8b9d8b7182e16
       - name: Gather repository metadata
         id: repo
-        uses: actions/github-script@7f4e771d2b3022fa3b8bac499d4a547619f3ab10
+        uses: actions/github-script@c713e510dbd7d213d92d41b7a7805a986f4c5c66
         with:
           script: |
             const repo = await github.rest.repos.get(context.repo)
