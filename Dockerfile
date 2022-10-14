@@ -1,4 +1,4 @@
-FROM python:3.10.7-alpine3.15 as install-weewx-stage
+FROM python:3.11.0rc2-alpine3.15 as install-weewx-stage
 
 ARG WEEWX_UID=421
 ENV WEEWX_HOME="/home/weewx"
@@ -34,7 +34,7 @@ RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
 COPY src/entrypoint.sh src/version.txt ./
 
-FROM python:3.10.7-slim-bullseye as final-stage
+FROM python:3.11.0rc2-slim-bullseye as final-stage
 
 ARG TARGETPLATFORM
 ARG WEEWX_UID=421
