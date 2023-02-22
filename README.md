@@ -54,7 +54,7 @@ services:
         source: ./data
         target: /data
     environment:
-      - TIMEZONE=US/Eastern
+      - TIMEZONE=UTC
       - WEEWX_UID=weewx
       - WEEWX_GID=dialout
     devices:
@@ -71,7 +71,7 @@ services:
    the container and generate a configuration file:
 
     ```console
-    docker-compose run weewx
+    docker compose run weewx
     ```
 
 1. The configuration file will be created in the `data` directory.  You should
@@ -81,7 +81,7 @@ services:
    background with:
 
     ```console
-    docker-compose up -d
+    docker compose up -d
     ```
 
 ## Upgrading ##
@@ -89,19 +89,19 @@ services:
 1. Stop the running container:
 
     ```console
-    docker-compose down
+    docker compose down
     ```
 
 1. Pull the new images from the Docker hub:
 
     ```console
-    docker-compose pull
+    docker compose pull
     ```
 
 1. Update your configuration file (a backup will be created):
 
     ```console
-    docker-compose run weewx --upgrade
+    docker compose run weewx --upgrade
     ```
 
 1. Read through the new configuration and verify.
@@ -112,7 +112,7 @@ services:
 1. Start the container up with the new image version:
 
     ```console
-    docker-compose up -d
+    docker compose up -d
     ```
 
 ## Volumes ##
@@ -153,17 +153,10 @@ Docker:
     cd weewx-docker
     ```
 
-1. Create the `Dockerfile-x` file with `buildx` platform support:
-
-    ```console
-    ./buildx-dockerfile.sh
-    ```
-
 1. Build the image using `buildx`:
 
     ```console
     docker buildx build \
-      --file Dockerfile-x \
       --platform linux/amd64 \
       --output type=docker \
       --tag felddy/weewx:4.8.0 .
@@ -176,17 +169,10 @@ in your environment.
 
 | Purpose | Command |
 |---------|---------|
-| Generate the default configuration | `docker-compose run weewx` |
-| Upgrade a previous configuration | `docker-compose run weewx --upgrade` |
-| Generate a test (simulator) configuration | `docker-compose run weewx --gen-test-config` |
-| Drop into a shell in the container | `docker-compose run weewx --shell` |
-
-## New repositories from a skeleton ##
-
-Please see our [Project Setup guide](https://github.com/cisagov/development-guide/tree/develop/project_setup)
-for step-by-step instructions on how to start a new repository from
-a skeleton. This will save you time and effort when configuring a
-new repository!
+| Generate the default configuration | `docker compose run weewx` |
+| Upgrade a previous configuration | `docker compose run weewx --upgrade` |
+| Generate a test (simulator) configuration | `docker compose run weewx --gen-test-config` |
+| Drop into a shell in the container | `docker compose run weewx --shell` |
 
 ## Contributing ##
 

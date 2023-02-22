@@ -11,7 +11,8 @@ RUN addgroup --system --gid ${WEEWX_UID} weewx \
 RUN apk --no-cache add tar
 
 WORKDIR /tmp
-COPY src/hashes requirements.txt ./
+COPY src/hashes README.md requirements.txt setup.py ./
+COPY src/_version.py ./src/_version.py
 
 # Download sources and verify hashes
 RUN wget -O "${ARCHIVE}" "https://weewx.com/downloads/released_versions/${ARCHIVE}"
@@ -32,7 +33,7 @@ WORKDIR ${WEEWX_HOME}
 
 RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
-COPY src/entrypoint.sh src/version.txt ./
+COPY src/entrypoint.sh src/_version.py ./
 
 FROM python:3.10.7-slim-bullseye as final-stage
 
