@@ -1,5 +1,4 @@
 ---
-
 # For most projects, this workflow file will not need changing; you simply need
 # to commit it to your repository.
 #
@@ -20,7 +19,7 @@ on:
     # The branches below must be a subset of the branches above
     branches: [develop]
   schedule:
-    - cron: '0 21 * * 6'
+    - cron: '31 7 * * 2'
 
 permissions:
   actions: read
@@ -45,30 +44,25 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@dd2c410b088af7c0dc8046f3ac9a8f4148492a95
+        uses: step-security/harden-runner@18bf8ad2ca49c14cbb28b91346d626ccfb00c518
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@b398f525a5587552e573b247ac661067fafa920b
+        uses: github/codeql-action/init@8775e868027fa230df8586bdf502bbd9b618a477
         with:
           languages: ${{ matrix.language }}
-          # If you wish to specify custom queries, you can do so here or in a
-          # config file. By default, queries listed here will override any
-          # specified in a config file. Prefix the list here with "+" to use
-          # these queries and those in the config file. queries:
-          # ./path/to/local/query, your-org/your-repo/queries@main
 
-      # Autobuild attempts to build any compiled languages  (C/C++, C#, or
+      # Autobuild attempts to build any compiled languages (C/C++, C#, or
       # Java). If this step fails, then you should remove it and run the build
-      # manually (see below)
+      # manually (see below).
       - name: Autobuild
-        uses: github/codeql-action/autobuild@b398f525a5587552e573b247ac661067fafa920b
+        uses: github/codeql-action/autobuild@8775e868027fa230df8586bdf502bbd9b618a477
 
       # ℹ️ Command-line programs to run using the OS shell. 📚
       # https://git.io/JvXDl
@@ -78,8 +72,8 @@ jobs:
       #    project uses a compiled language
 
       # - run: |
-      #   make bootstrap
-      #   make release
+      #     make bootstrap
+      #     make release
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@b398f525a5587552e573b247ac661067fafa920b
+        uses: github/codeql-action/analyze@8775e868027fa230df8586bdf502bbd9b618a477
