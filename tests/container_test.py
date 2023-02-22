@@ -14,7 +14,27 @@ VERSION_FILE = "src/_version.py"
 
 @pytest.mark.parametrize(
     "container",
-    [pytest.lazy_fixture("main_container"), pytest.lazy_fixture("version_container")],
+    [
+        pytest.lazy_fixture("gen_test_config_container"),
+    ],
+)
+def test_gen_config(container):
+    """Test that the test configuration generator has completed."""
+    # Wait until the container has exited or timeout.
+    for _ in range(10):
+        container.reload()
+        if container.status == "exited":
+            break
+        time.sleep(1)
+    assert container.status in ("exited")
+
+
+@pytest.mark.parametrize(
+    "container",
+    [
+        pytest.lazy_fixture("main_container"),
+        pytest.lazy_fixture("version_container"),
+    ],
 )
 def test_container_running(container):
     """Test that the container has started."""

@@ -16,6 +16,7 @@ MAIN_SERVICE_NAME = "weewx"
 REDACTION_REGEXES: List[re.Pattern] = []
 VERSION_FILE = "src/_version.py"
 VERSION_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-version"
+GEN_TEST_CONFIG_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-gen-test-config"
 
 client = docker.from_env()
 
@@ -36,6 +37,20 @@ def group_github_log_lines(request):
     yield
     print()
     print("::endgroup::")
+
+
+@pytest.fixture(scope="session")
+def gen_test_config_container(image_tag):
+    """Fixture for the test configuration generator container."""
+    container = client.containers.run(
+        image_tag,
+        command="--gen-test-config",
+        detach=True,
+        name=GEN_TEST_CONFIG_SERVICE_NAME,
+        volumes={str(Path.cwd() / Path("data")): {"bind": "/data", "driver": "local"}},
+    )
+    yield container
+    container.remove(force=True)
 
 
 @pytest.fixture(scope="session")
