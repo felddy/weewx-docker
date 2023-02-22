@@ -32,7 +32,8 @@ copy_default_config() {
   echo "The default configuration has been copied."
   # Change the default location of the SQLITE database to the volume
   echo "Setting SQLITE_ROOT to the container volume."
-  sed -i "s/SQLITE_ROOT =.*/SQLITE_ROOT = \/data/g" "${CONF_FILE}"
+  sed "s/SQLITE_ROOT =.*/SQLITE_ROOT = \/data/g" "${CONF_FILE}" > /tmp/weewx.conf
+  mv /tmp/weewx.conf "${CONF_FILE}"
 }
 
 if [ "$1" = "--gen-test-config" ]; then
