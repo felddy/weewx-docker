@@ -34,23 +34,6 @@ jobs:
     with:
       image_name: ${{ needs.config.outputs.image_name }}
 
-  foundry-secrets:
-    name: "Foundry secrets"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check foundry.com credentials
-        run: |
-          return_code=0
-          if [ -z "${{ secrets.FOUNDRY_USERNAME }}" ]; then
-            echo "::warning::Set the FOUNDRY_USERNAME secret."
-            return_code=1
-          fi
-          if [ -z "${{ secrets.FOUNDRY_PASSWORD }}" ]; then
-            echo "::warning::Set the FOUNDRY_PASSWORD secret."
-            return_code=1
-          fi
-          exit $return_code
-
   docker-secrets:
     name: "Docker secrets"
     runs-on: ubuntu-latest
@@ -67,17 +50,6 @@ jobs:
             return_code=1
           fi
           exit $return_code
-
-  artifact-key:
-    name: "Artifact key"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check artifact key
-        run: |
-          if [ -z "${{ secrets.ARTIFACT_KEY }}" ]; then
-            echo "::warning::Set the ARTIFACT_KEY secret."
-            exit 1
-          fi
 
   lint:
     name: "Lint"
@@ -102,67 +74,17 @@ jobs:
       build_args: |
         VERSION=${{ needs.metadata.outputs.source_version }}
 
-  build-pre-installed-test-image:
-    name: "Build pre-installed test image"
-    needs:
-      - artifact-key
-      - config
-      - foundry-secrets
-      - lint
-      - metadata
-    uses: felddy/reusable-workflows/.github/workflows/docker-build-image.yml@develop
-    with:
-      artifact_name: ${{ needs.config.outputs.image_archive_artifact_name }}-pre-installed
-      cache_from_scopes: ${{ needs.config.outputs.test_platform }}-pre-installed
-      cache_to_scope: ${{ needs.config.outputs.test_platform }}-pre-installed
-      image_archive_name_stem: ${{ needs.config.outputs.test_platform }}
-      image_labels: ${{ needs.metadata.outputs.image_labels }}
-      platforms: ${{ needs.config.outputs.test_platform }}
-    secrets:
-      image_archive_key: ${{ secrets.ARTIFACT_KEY }}
-      build_args: |
-        FOUNDRY_PASSWORD=${{ secrets.FOUNDRY_PASSWORD }}
-        FOUNDRY_USERNAME=${{ secrets.FOUNDRY_USERNAME }}
-        VERSION=${{ needs.metadata.outputs.source_version }}
-
-# Since we need to pass the foundryvtt.com credentials to the tests, we can't
-# use the standard reusable test workflow.  Instead, we'll use a modified
-# version of the workflow that accepts the credential secrets and is stored in
-# this repository.
-
   test-normal-image:
     name: "Test normal image"
     needs:
-      - artifact-key
       - build-normal-test-image
       - config
-      - foundry-secrets
-    uses: ./.github/workflows/docker-pytest-image.yml
+    uses: felddy/reusable-workflows/.github/workflows/docker-pytest-image.yml@develop
     with:
       data_artifact_name: ${{ needs.config.outputs.data_artifact_name }}
       data_artifact_path: ${{ needs.config.outputs.data_artifact_path }}
       image_artifact_name: ${{ needs.config.outputs.image_archive_artifact_name }}
       image_archive_name: ${{ needs.build-normal-test-image.outputs.image_archive_name }}
-    secrets:
-      data_archive_key: ${{ secrets.ARTIFACT_KEY }}
-      foundry_password: ${{ secrets.FOUNDRY_PASSWORD }}
-      foundry_username: ${{ secrets.FOUNDRY_USERNAME }}
-
-  test-pre-installed-image:
-    name: "Test pre-installed image"
-    needs:
-      - artifact-key
-      - build-pre-installed-test-image
-      - config
-    uses: ./.github/workflows/docker-pytest-image.yml
-    with:
-      data_artifact_name: ${{ needs.config.outputs.data_artifact_name }}-pre-installed
-      data_artifact_path: ${{ needs.config.outputs.data_artifact_path }}
-      image_artifact_name: ${{ needs.config.outputs.image_archive_artifact_name }}-pre-installed
-      image_archive_name: ${{ needs.build-pre-installed-test-image.outputs.image_archive_name }}
-    secrets:
-      data_archive_key: ${{ secrets.ARTIFACT_KEY }}
-      image_archive_key: ${{ secrets.ARTIFACT_KEY }}
 
   build-each-platform:
     needs:
@@ -170,7 +92,6 @@ jobs:
       - lint
       - metadata
       - test-normal-image
-      - test-pre-installed-image
     if: github.event_name != 'pull_request'
     strategy:
       matrix:
