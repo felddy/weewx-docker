@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_IMAGE_VERSION=3.11.1
+ARG PYTHON_VERSION=3.11.2
 ARG WEEWX_UID=421
-ARG WEEWX_VERSION=4.8.0
+ARG WEEWX_VERSION=4.10.2
 ARG WEEWX_HOME="/home/weewx"
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
-FROM --platform=$BUILDPLATFORM python:${PYTHON_IMAGE_VERSION} as build-stage
+FROM --platform=$BUILDPLATFORM python:${PYTHON_VERSION} as build-stage
 
 ARG WEEWX_VERSION
 ARG ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
@@ -53,7 +53,7 @@ RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
 COPY src/entrypoint.sh src/_version.py ./
 
-FROM python:${PYTHON_IMAGE_VERSION}-slim-bullseye as final-stage
+FROM python:${PYTHON_VERSION}-slim-bullseye as final-stage
 
 ARG TARGETPLATFORM
 ARG WEEWX_HOME
