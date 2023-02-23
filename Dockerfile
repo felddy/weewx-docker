@@ -1,17 +1,37 @@
-FROM python:3.10.7-alpine3.15 as install-weewx-stage
+# syntax=docker/dockerfile:1
 
+ARG PYTHON_IMAGE_VERSION=3.11.1
 ARG WEEWX_UID=421
-ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.8.0"
-ENV ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
+ARG WEEWX_VERSION=4.8.0
+ARG WEEWX_HOME="/home/weewx"
 
-RUN addgroup --system --gid ${WEEWX_UID} weewx \
-  && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
+FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
-RUN apk --no-cache add tar
+FROM --platform=$BUILDPLATFORM python:${PYTHON_IMAGE_VERSION} as build-stage
+
+ARG WEEWX_VERSION
+ARG ARCHIVE="weewx-${WEEWX_VERSION}.tar.gz"
+
+COPY --from=xx / /
+RUN apt-get update && apt-get install -y clang lld
+ARG TARGETPLATFORM
+RUN xx-apt install -y libc6-dev
+
+# RUN apk --no-cache add cargo gcc libffi-dev make musl-dev openssl-dev python3-dev tar
+RUN apt-get install -y wget
 
 WORKDIR /tmp
-COPY src/hashes requirements.txt ./
+RUN \
+  --mount=type=cache,mode=0777,target=/var/cache/apt \
+  --mount=type=cache,mode=0777,target=/root/.cache/pip <<EOF
+apt-get update
+python -m pip install --upgrade pip
+pip install --upgrade virtualenv
+virtualenv /opt/venv
+EOF
+
+COPY src/hashes README.md requirements.txt setup.py ./
+COPY src/_version.py ./src/_version.py
 
 # Download sources and verify hashes
 RUN wget -O "${ARCHIVE}" "https://weewx.com/downloads/released_versions/${ARCHIVE}"
@@ -20,26 +40,24 @@ RUN wget -O weewx-interceptor.zip https://github.com/matthewwall/weewx-intercept
 RUN sha256sum -c < hashes
 
 # WeeWX setup
-RUN tar --extract --gunzip --directory ${WEEWX_HOME} --strip-components=1 --file "${ARCHIVE}"
-RUN chown -R weewx:weewx ${WEEWX_HOME}
+RUN tar --extract --gunzip --directory /root --strip-components=1 --file "${ARCHIVE}"
 
 # Python setup
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache --requirement requirements.txt
 
-WORKDIR ${WEEWX_HOME}
+WORKDIR /root
 
 RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
-COPY src/entrypoint.sh src/version.txt ./
+COPY src/entrypoint.sh src/_version.py ./
 
-FROM python:3.10.7-slim-bullseye as final-stage
+FROM python:${PYTHON_IMAGE_VERSION}-slim-bullseye as final-stage
 
 ARG TARGETPLATFORM
-ARG WEEWX_UID=421
-ENV WEEWX_HOME="/home/weewx"
-ENV WEEWX_VERSION="4.8.0"
+ARG WEEWX_HOME
+ARG WEEWX_UID
 
 # For a list of pre-defined annotation keys and value types see:
 # https://github.com/opencontainers/image-spec/blob/master/annotations.md
@@ -55,11 +73,12 @@ RUN apt-get update && apt-get install -y libusb-1.0-0 gosu busybox-syslogd tzdat
 
 WORKDIR ${WEEWX_HOME}
 
-COPY --from=install-weewx-stage /opt/venv /opt/venv
-COPY --from=install-weewx-stage ${WEEWX_HOME} ${WEEWX_HOME}
+COPY --from=build-stage /opt/venv /opt/venv
+COPY --from=build-stage /root ${WEEWX_HOME}
 
 RUN mkdir /data && \
-  cp weewx.conf /data
+  cp weewx.conf /data && \
+  chown -R weewx:weewx ${WEEWX_HOME}
 
 VOLUME ["/data"]
 

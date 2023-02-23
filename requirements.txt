@@ -1,6 +1,1 @@
-configobj
-paho-mqtt
-pyserial
-pyusb
-setuptools
-wheel
+-e .

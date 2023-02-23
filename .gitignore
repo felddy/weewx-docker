@@ -2,11 +2,13 @@
 # Files already tracked by Git are not affected.
 # See: https://git-scm.com/docs/gitignore
 
-## Docker ##
-Dockerfile-x
-
 ## Python ##
 __pycache__
 .mypy_cache
 .pytest_cache
 .python-version
+*.egg-info
+venv
+
+## VS Code ##
+.vscode
