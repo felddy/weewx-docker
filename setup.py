@@ -72,7 +72,7 @@ setup(
         "paho-mqtt == 1.6.1",
         "pyserial == 3.5",
         "pyusb == 1.2.1",
-        "semver == 2.13.0",
+        "semver == 3.0.0",
         "setuptools == 67.6.1",
         "wheel == 0.40.0",
     ],
