@@ -73,7 +73,7 @@ setup(
         "pyserial == 3.5",
         "pyusb == 1.2.1",
         "semver == 3.0.0",
-        "setuptools == 67.6.1",
+        "setuptools == 67.7.0",
         "wheel == 0.40.0",
     ],
     extras_require={
