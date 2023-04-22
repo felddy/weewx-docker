@@ -70,6 +70,7 @@ setup(
         "configobj == 5.0.8",
         "docker-compose == 1.29.2",
         "paho-mqtt == 1.6.1",
+        "prometheus-client == 0.16.0",
         "pyserial == 3.5",
         "pyusb == 1.2.1",
         "semver == 3.0.0",
