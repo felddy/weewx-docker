@@ -68,13 +68,12 @@ setup(
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     install_requires=[
         "configobj == 5.0.8",
-        "docker-compose == 1.29.2",
         "paho-mqtt == 1.6.1",
         "pyserial == 3.5",
         "pyusb == 1.2.1",
         "semver == 3.0.1",
         "setuptools == 67.8.0",
-        "wheel == 0.40.0",
+        "wheel == 0.41.1",
     ],
     extras_require={
         "test": [
