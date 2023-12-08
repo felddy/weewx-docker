@@ -73,7 +73,7 @@ setup(
         "pyusb == 1.2.1",
         "semver == 3.0.2",
         "setuptools == 68.2.2",
-        "wheel == 0.41.3",
+        "wheel == 0.42.0",
     ],
     extras_require={
         "test": [
