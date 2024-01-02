@@ -37,6 +37,7 @@ COPY src/_version.py ./src/_version.py
 RUN wget -O "${ARCHIVE}" "https://weewx.com/downloads/released_versions/${ARCHIVE}"
 RUN wget -O weewx-mqtt.zip https://github.com/matthewwall/weewx-mqtt/archive/master.zip
 RUN wget -O weewx-interceptor.zip https://github.com/matthewwall/weewx-interceptor/archive/master.zip
+RUN wget -O weewx-gw1000.zip https://github.com/gjr80/weewx-gw1000/archive/master.zip
 RUN sha256sum -c < hashes
 
 # WeeWX setup
@@ -51,6 +52,7 @@ WORKDIR /root
 
 RUN bin/wee_extension --install /tmp/weewx-mqtt.zip
 RUN bin/wee_extension --install /tmp/weewx-interceptor.zip
+RUN bin/wee_extension --install /tmp/weewx-gw1000.zip
 COPY src/entrypoint.sh src/_version.py ./
 
 FROM python:${PYTHON_VERSION}-slim-bullseye as final-stage

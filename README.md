@@ -17,6 +17,7 @@ This container has the following WeeWX extensions pre-installed:
 
 - [interceptor](https://github.com/matthewwall/weewx-interceptor)
 - [mqtt](https://github.com/weewx/weewx/wiki/mqtt)
+- [gw1000](https://github.com/gjr80/weewx-gw1000)
 
 ## Running ##
 
