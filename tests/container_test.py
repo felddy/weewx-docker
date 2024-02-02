@@ -12,32 +12,30 @@ READY_MESSAGE = "engine: Starting main packet loop"
 VERSION_FILE = "src/_version.py"
 
 
-@pytest.mark.parametrize(
-    "container",
-    [
-        pytest.lazy_fixture("gen_test_config_container"),
-    ],
-)
-def test_gen_config(container):
+def test_gen_config(gen_test_config_container):
     """Test that the test configuration generator has completed."""
     # Wait until the container has exited or timeout.
+
     for _ in range(10):
-        container.reload()
-        if container.status == "exited":
+        gen_test_config_container.reload()
+        if gen_test_config_container.status == "exited":
             break
         time.sleep(1)
-    assert container.status in ("exited")
+    assert gen_test_config_container.status in ("exited")
 
 
 @pytest.mark.parametrize(
     "container",
     [
-        pytest.lazy_fixture("main_container"),
-        pytest.lazy_fixture("version_container"),
+        "main_container",
+        "version_container",
     ],
 )
-def test_container_running(container):
+def test_container_running(container, request):
     """Test that the container has started."""
+    # Lazy fixture evaluation
+    container = request.getfixturevalue(container)
+
     # Wait until the container is running or timeout.
     for _ in range(10):
         container.reload()
