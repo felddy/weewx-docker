@@ -72,7 +72,7 @@ setup(
         "pyserial == 3.5",
         "pyusb == 1.2.1",
         "semver == 3.0.2",
-        "setuptools == 70.0.0",
+        "setuptools == 71.1.0",
         "wheel == 0.43.0",
     ],
     extras_require={
@@ -80,8 +80,8 @@ setup(
             "coverage == 6.5.0",
             "coveralls == 4.0.1",
             "docker == 7.1.0",
-            "pre-commit == 3.7.1",
-            "pytest == 8.2.1",
+            "pre-commit == 3.8.0",
+            "pytest == 8.3.2",
             "pytest-cov == 5.0.0",
         ]
     },
