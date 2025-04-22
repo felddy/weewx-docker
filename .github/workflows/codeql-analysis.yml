@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf  # tag=v2.11.1
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0  # tag=v2.12.0
         with:
           # TODO: change to 'egress-policy: block' after couple of runs
           egress-policy: audit
@@ -55,7 +55,7 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@1b549b9259bda1cb5ddde3b41741a82a2d15a841  # tag=codeql-bundle-v3.28.13
+        uses: github/codeql-action/init@45775bd8235c68ba998cffa5171334d58593da47  # tag=codeql-bundle-v3.28.15
         with:
           languages: ${{ matrix.language }}
 
@@ -65,7 +65,7 @@ jobs:
       # manually (see below).
       # manually (see below).
       - name: Autobuild
-        uses: github/codeql-action/autobuild@1b549b9259bda1cb5ddde3b41741a82a2d15a841  # tag=codeql-bundle-v3.28.13
+        uses: github/codeql-action/autobuild@45775bd8235c68ba998cffa5171334d58593da47  # tag=codeql-bundle-v3.28.15
 
       # ℹ️ Command-line programs to run using the OS shell. 📚
       # https://git.io/JvXDl
@@ -83,4 +83,4 @@ jobs:
       #     make release
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@1b549b9259bda1cb5ddde3b41741a82a2d15a841  # tag=codeql-bundle-v3.28.13
+        uses: github/codeql-action/analyze@45775bd8235c68ba998cffa5171334d58593da47  # tag=codeql-bundle-v3.28.15
