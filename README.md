@@ -41,6 +41,7 @@ services:
 
     ```console
     mkdir data
+    chown 1000:1000 data
     ```
 
 1. If this is the first time running weewx, use the following command to start
