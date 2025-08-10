@@ -46,7 +46,21 @@ LABEL org.opencontainers.image.vendor="Geekpad"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apt-get update && apt-get install -y git libusb-1.0-0
+RUN apt-get update && apt-get install -y \
+    git \
+    libusb-1.0-0 \
+    locales \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* \
+  && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "de_DE.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "ca_ES.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "it_IT.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "fr_FR.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "es_ES.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "nl_NL.UTF-8 UTF-8" >> /etc/locale.gen \
+  && echo "pt_PT.UTF-8 UTF-8" >> /etc/locale.gen \
+  && locale-gen
 
 WORKDIR ${WEEWX_HOME}
 
