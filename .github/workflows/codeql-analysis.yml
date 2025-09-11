@@ -55,7 +55,7 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@d3678e237b9c32a6c9bffb3315c335f976f3549f  # tag=codeql-bundle-v3.30.2
+        uses: github/codeql-action/init@192325c86100d080feab897ff886c34abd4c83a3  # tag=codeql-bundle-v3.30.3
         with:
           languages: ${{ matrix.language }}
 
@@ -65,7 +65,7 @@ jobs:
       # manually (see below).
       # manually (see below).
       - name: Autobuild
-        uses: github/codeql-action/autobuild@d3678e237b9c32a6c9bffb3315c335f976f3549f  # tag=codeql-bundle-v3.30.2
+        uses: github/codeql-action/autobuild@192325c86100d080feab897ff886c34abd4c83a3  # tag=codeql-bundle-v3.30.3
 
       # ℹ️ Command-line programs to run using the OS shell. 📚
       # https://git.io/JvXDl
@@ -83,4 +83,4 @@ jobs:
       #     make release
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@d3678e237b9c32a6c9bffb3315c335f976f3549f  # tag=codeql-bundle-v3.30.2
+        uses: github/codeql-action/analyze@192325c86100d080feab897ff886c34abd4c83a3  # tag=codeql-bundle-v3.30.3
