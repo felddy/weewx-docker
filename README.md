@@ -146,19 +146,19 @@ WeeWX](https://weewx.com/docs.html) that they support.
 > is compatible with your saved data, and prevents inadvertent upgrades to a new
 > major version.
 
-| Image:tag | Description |
-|-----------|-------------|
-|`felddy/weewx:5`| The most recent image matching the major version number.  Most users will use this tag. |
-|`felddy/weewx:5.1`| The most recent image matching the major and minor version numbers. |
-|`felddy/weewx:5.1.0`| An exact image version. |
+| Image:tag            | Description                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `felddy/weewx:5`     | The most recent image matching the major version number.  Most users will use this tag. |
+| `felddy/weewx:5.1`   | The most recent image matching the major and minor version numbers.                     |
+| `felddy/weewx:5.1.0` | An exact image version.                                                                 |
 
 See the [tags tab](https://hub.docker.com/r/felddy/weewx/tags) on Docker
 Hub for a list of all the supported tags.
 
 ## Volumes ##
 
-| Mount point | Purpose        |
-|-------------|----------------|
+| Mount point | Purpose                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------- |
 | `/data`     | [WeeWX root](https://weewx.com/docs/5.1/usersguide/where/#location-of-weewx-components) directory |
 
 ## Building from source ##
