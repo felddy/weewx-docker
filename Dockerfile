@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_VERSION=3.13.0
+ARG PYTHON_VERSION=3.13.11
 ARG WEEWX_UID=1000
 ARG WEEWX_HOME="/home/weewx"
 
@@ -46,7 +46,7 @@ LABEL org.opencontainers.image.vendor="Geekpad"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apt-get update && apt-get install -y git libusb-1.0-0
+RUN apt-get update && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6
 
 WORKDIR ${WEEWX_HOME}
 
