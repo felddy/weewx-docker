@@ -1,0 +1,65 @@
+---
+name: Docker image
+
+on:
+  pull_request:
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Infer image tags
+        id: get_tags
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
+            # We believe tags from releases
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            # But also give a more stable git relevant tag
+            echo "hash=main_${GITHUB_SHA::6}" >> $GITHUB_OUTPUT
+            if [[ "$GITHUB_REF" != "refs/tags/"*"-pre"* ]]; then
+              # Only tag latest for non-prereleases
+              echo "channel=latest" >> $GITHUB_OUTPUT
+            fi
+          elif [[ "$GITHUB_REF" == "refs/pull/"* ]]; then
+            # Tag PRs only by PR number & branch to pollute registry less on force pushes
+            echo "version=pr${GITHUB_REF_NAME/\/merge}_${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.get_tags.outputs.hash }}
+            type=raw,value=${{ steps.get_tags.outputs.channel }}
+            type=raw,value=${{ steps.get_tags.outputs.version }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
