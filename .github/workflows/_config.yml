@@ -39,6 +39,6 @@ on:
 jobs:
   csv-to-json:
     name: "Convert CSV to JSON"
-    uses: felddy/reusable-workflows/.github/workflows/csv-to-json.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/csv-to-json.yml@v4
     with:
       csv: ${{ inputs.platforms }}

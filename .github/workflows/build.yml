@@ -26,7 +26,7 @@ permissions:
 jobs:
   diagnostics:
     name: "Diagnostics"
-    uses: felddy/reusable-workflows/.github/workflows/diagnostics.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/diagnostics.yml@v4
 
   config:
     name: "Config"
@@ -35,7 +35,7 @@ jobs:
   metadata:
     name: "Metadata"
     needs: [config]
-    uses: felddy/reusable-workflows/.github/workflows/container-metadata.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-metadata.yml@v4
     with:
       image_name: ${{ needs.config.outputs.image_name }}
 
@@ -59,7 +59,7 @@ jobs:
   lint:
     name: "Lint"
     needs: [config]
-    uses: felddy/reusable-workflows/.github/workflows/common-lint.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/common-lint.yml@v4
 
   build-test-container:
     name: "Build container for testing"
@@ -67,7 +67,7 @@ jobs:
       - config
       - lint
       - metadata
-    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@v4
     with:
       artifact_name: ${{ needs.config.outputs.image_artifact_name_stem }}-${{ needs.config.outputs.test_platform }}
       build_arg_1_name: VERSION
@@ -84,7 +84,7 @@ jobs:
     needs:
       - build-test-container
       - config
-    uses: felddy/reusable-workflows/.github/workflows/container-test.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-test.yml@v4
     with:
       data_artifact_name: ${{ needs.config.outputs.data_artifact_name }}
       data_artifact_path: ${{ needs.config.outputs.data_artifact_path }}
@@ -104,7 +104,7 @@ jobs:
         platform: ${{ fromJson(needs.config.outputs.platforms_json) }}
         exclude:
           - platform: ${{ needs.config.outputs.test_platform }}
-    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@v4
     with:
       artifact_name: ${{ needs.config.outputs.image_artifact_name_stem }}-${{ matrix.platform }}
       build_arg_1_name: VERSION
@@ -126,7 +126,7 @@ jobs:
     strategy:
       matrix:
         platform: ${{ fromJson(needs.config.outputs.platforms_json) }}
-    uses: felddy/reusable-workflows/.github/workflows/container-sbom.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-sbom.yml@v4
     with:
       image_artifact_name: ${{ needs.config.outputs.image_artifact_name_stem }}-${{ matrix.platform }}
       sbom_artifact_name: ${{ needs.config.outputs.sbom_artifact_name_stem }}-${{ matrix.platform }}
@@ -141,7 +141,7 @@ jobs:
     if: github.event_name != 'pull_request'
     permissions:
       packages: write
-    uses: felddy/reusable-workflows/.github/workflows/container-publish-multiarch.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-publish-multiarch.yml@v4
     with:
       artifact_name_pattern: ${{ needs.config.outputs.image_artifact_name_stem }}-*
       image_tags: ${{ needs.metadata.outputs.image_tags }}
@@ -157,7 +157,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: felddy/reusable-workflows/.github/workflows/container-mirror.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-mirror.yml@v4
     with:
       image_name: ${{ needs.config.outputs.image_name }}
       image_tag_names: ${{ needs.metadata.outputs.image_tag_names }}
@@ -174,7 +174,7 @@ jobs:
       - docker-secrets
       - metadata
     if: github.event_name == 'release' && needs.metadata.outputs.latest == 'true'
-    uses: felddy/reusable-workflows/.github/workflows/dockerhub-description.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/dockerhub-description.yml@v4
     with:
       image_name: ${{ needs.config.outputs.image_name }}
     secrets:
