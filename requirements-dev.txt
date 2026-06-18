@@ -1,3 +1,0 @@
---requirement requirements-test.txt
-ipython
-semver

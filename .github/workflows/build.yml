@@ -1,180 +1,143 @@
 ---
 name: Build
 
-on:
+on:  # yamllint disable-line rule:truthy
+  merge_group:
+    types:
+      - checks_requested
+  pull_request:
   push:
     branches:
       - "**"
     tags:
       - "v*.*.*"
-  pull_request:
   release:
-    types: [edited, published]
+    types:
+      - edited
+      - published
   schedule:
-    - cron: "0 10 * * *"  # everyday at 10am
+    - cron: 0 10 * * *  # everyday at 10am
   workflow_dispatch:
     inputs:
-      dispatch-tag:
-        description: "Tag to apply to pushed images"
+      image-tag:
+        description: Tag to apply to pushed images
         required: true
-        default: "dispatch"
+        default: dispatch
+
+# Set a default shell for any run steps. The `-Eueo pipefail` sets errtrace,
+# nounset, errexit, and pipefail. The `-x` will print all commands as they are
+# run. Please see the GitHub Actions documentation for more information:
+# https://docs.github.com/en/actions/using-jobs/setting-default-values-for-jobs
+defaults:
+  run:
+    shell: bash -Eueo pipefail -x {0}
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
 
 permissions:
-  actions: read
   contents: read
+  packages: write
+  id-token: write
+  attestations: write
+  security-events: write
 
 jobs:
   diagnostics:
-    name: "Diagnostics"
-    uses: felddy/reusable-workflows/.github/workflows/diagnostics.yml@v3
+    name: Diagnostics
+    uses: felddy/reusable-workflows/.github/workflows/diagnostics.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
 
   config:
-    name: "Config"
+    name: Config
     uses: ./.github/workflows/_config.yml
 
-  metadata:
-    name: "Metadata"
-    needs: [config]
-    uses: felddy/reusable-workflows/.github/workflows/container-metadata.yml@v3
-    with:
-      image_name: ${{ needs.config.outputs.image_name }}
-
-  docker-secrets:
-    name: "Docker secrets"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check docker.com credentials
-        run: |
-          return_code=0
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-            echo "::warning::Set the DOCKER_USERNAME secret."
-            return_code=1
-          fi
-          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
-            echo "::warning::Set the DOCKER_PASSWORD secret."
-            return_code=1
-          fi
-          exit $return_code
-
   lint:
-    name: "Lint"
-    needs: [config]
-    uses: felddy/reusable-workflows/.github/workflows/common-lint.yml@v3
+    name: Lint
+    uses: felddy/reusable-workflows/.github/workflows/common-lint.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
 
-  build-test-container:
-    name: "Build container for testing"
+  build:
+    name: Build and Publish Container
     needs:
       - config
       - lint
-      - metadata
-    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@v3
+      - diagnostics
+    # Skip registry-pushing jobs on fork PRs — secrets are unavailable and
+    # GITHUB_TOKEN is read-only, so pushes would fail with auth errors.
+    if: |
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
     with:
-      artifact_name: ${{ needs.config.outputs.image_artifact_name_stem }}-${{ needs.config.outputs.test_platform }}
-      build_arg_1_name: VERSION
-      cache_from_scopes: ${{ needs.config.outputs.test_platform }}
-      cache_to_scope: ${{ needs.config.outputs.test_platform }}
-      image_archive_name_stem: ${{ needs.config.outputs.test_platform }}
-      image_labels: ${{ needs.metadata.outputs.image_labels }}
-      platforms: ${{ needs.config.outputs.test_platform }}
-    secrets:
-      build_arg_1_value: ${{ needs.metadata.outputs.source_version }}
+      platforms: ${{ needs.config.outputs.platforms }}
+      image-name: ${{ needs.config.outputs.image_name }}
+      context: .
+      dockerfile: ./Dockerfile
+      scan-severity: CRITICAL,HIGH
+      build-args: |
+        CONTAINER_VERSION=${{ needs.config.outputs.container_version }}
 
-  test-normal-container:
-    name: "Test image"
-    needs:
-      - build-test-container
-      - config
-    uses: felddy/reusable-workflows/.github/workflows/container-test.yml@v3
-    with:
-      data_artifact_name: ${{ needs.config.outputs.data_artifact_name }}
-      data_artifact_path: ${{ needs.config.outputs.data_artifact_path }}
-      image_artifact_name: ${{ needs.build-test-container.outputs.artifact_name }}
-      image_archive_name: ${{ needs.build-test-container.outputs.image_archive_name }}
-
-  build-each-platform:
-    name: "Build container"
+  test:
+    name: Test Container
     needs:
       - config
-      - lint
-      - metadata
-      - test-normal-container
-    if: github.event_name != 'pull_request'
-    strategy:
-      matrix:
-        platform: ${{ fromJson(needs.config.outputs.platforms_json) }}
-        exclude:
-          - platform: ${{ needs.config.outputs.test_platform }}
-    uses: felddy/reusable-workflows/.github/workflows/container-build.yml@v3
-    with:
-      artifact_name: ${{ needs.config.outputs.image_artifact_name_stem }}-${{ matrix.platform }}
-      build_arg_1_name: VERSION
-      cache_from_scopes: ${{ matrix.platform }}
-      cache_to_scope: ${{ matrix.platform }}
-      image_labels: ${{ needs.metadata.outputs.image_labels }}
-      image_archive_name_stem: ${{ matrix.platform }}
-      platforms: ${{ matrix.platform }}
-    secrets:
-      build_arg_1_value: ${{ needs.metadata.outputs.source_version }}
-
-  generate-sboms:
-    name: "Bill of Materials"
-    needs:
-      - build-each-platform
-      - config
+      - build
+    uses: felddy/reusable-workflows/.github/workflows/container-test.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
     permissions:
-      contents: write
-    strategy:
-      matrix:
-        platform: ${{ fromJson(needs.config.outputs.platforms_json) }}
-    uses: felddy/reusable-workflows/.github/workflows/container-sbom.yml@v3
+      actions: read
+      contents: read
+      packages: read
     with:
-      image_artifact_name: ${{ needs.config.outputs.image_artifact_name_stem }}-${{ matrix.platform }}
-      sbom_artifact_name: ${{ needs.config.outputs.sbom_artifact_name_stem }}-${{ matrix.platform }}
+      image-name: ${{ needs.config.outputs.image_name }}
+      platforms: ${{ needs.config.outputs.test_platforms }}
 
-  build-multi-arch-image:
-    name: "Publish container"
+  publish-manifest:
+    name: Publish Manifest
     needs:
-      - build-each-platform
       - config
-      - docker-secrets
-      - metadata
-    if: github.event_name != 'pull_request'
+      - build
+      - test
+    uses: felddy/reusable-workflows/.github/workflows/container-publish-manifest.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
     permissions:
+      actions: read
+      contents: read
       packages: write
-    uses: felddy/reusable-workflows/.github/workflows/container-publish-multiarch.yml@v3
+      id-token: write
+      attestations: write
     with:
-      artifact_name_pattern: ${{ needs.config.outputs.image_artifact_name_stem }}-*
-      image_tags: ${{ needs.metadata.outputs.image_tags }}
+      image-name: ${{ needs.config.outputs.image_name }}
+      platforms: ${{ needs.config.outputs.platforms }}
 
   mirror-to-dockerhub:
     name: Mirror images to DockerHub
     needs:
-      - build-multi-arch-image
+      - publish-manifest
       - config
-      - docker-secrets
-      - metadata
     if: github.event_name == 'release' && !github.event.release.prerelease
     permissions:
       contents: read
       packages: read
-    uses: felddy/reusable-workflows/.github/workflows/container-mirror.yml@v3
+    uses: felddy/reusable-workflows/.github/workflows/container-mirror.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
     with:
       image_name: ${{ needs.config.outputs.image_name }}
-      image_tag_names: ${{ needs.metadata.outputs.image_tag_names }}
+      image_tag_names: ${{ needs.publish-manifest.outputs.image-tag-names }}
       target_registry: docker.io
     secrets:
-      registry_password: ${{ secrets.DOCKER_PASSWORD }}
-      registry_username: ${{ secrets.DOCKER_USERNAME }}
+      target-registry-username: ${{ secrets.DOCKER_USERNAME }}
+      target-registry-password: ${{ secrets.DOCKER_PASSWORD }}
 
   publish-readme:
     name: Publish docs to DockerHub
     needs:
-      - build-multi-arch-image
+      - publish-manifest
       - config
-      - docker-secrets
-      - metadata
-    if: github.event_name == 'release' && needs.metadata.outputs.latest == 'true'
-    uses: felddy/reusable-workflows/.github/workflows/dockerhub-description.yml@v3
+    if: |
+      github.event_name == 'release' &&
+      !github.event.release.prerelease &&
+      needs.publish-manifest.outputs.is-latest == 'true'
+    uses: felddy/reusable-workflows/.github/workflows/dockerhub-description.yml@76486c28caa391f5f9db4941fc555a20a6e084c8  # tag=v4.2.0
     with:
       image_name: ${{ needs.config.outputs.image_name }}
     secrets:

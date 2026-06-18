@@ -170,22 +170,22 @@ repos:
     rev: v1.18.2
     hooks:
       - id: mypy
-  - repo: https://github.com/pypa/pip-audit
-    rev: v2.9.0
-    hooks:
-      - id: pip-audit
-        args:
-          # Add any pip requirements files to scan
-          - --requirement
-          - requirements-dev.txt
-          - --requirement
-          - requirements-test.txt
-          - --requirement
-          - requirements.txt
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
       - id: pyupgrade
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.3
+    hooks:
+      - id: uv-lock
+  - repo: local
+    hooks:
+      - id: uv-audit
+        name: uv-audit
+        language: system
+        entry: uv audit --preview-features audit
+        files: ^uv.lock$
+        pass_filenames: false
 
   # Ansible hooks
   - repo: https://github.com/ansible/ansible-lint

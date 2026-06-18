@@ -32,7 +32,7 @@ homepage = "https://github.com/felddy"
 issues = "https://github.com/felddy/weewx-docker/issues"
 source = "https://github.com/felddy/weewx-docker"
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
     "coverage",
     "coveralls",
@@ -40,8 +40,16 @@ test = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "semver",
+]
+dev = ["ipython", "mypy", "semver", { include-group = "test" }]
+
+[tool.pytest.ini_options]
+addopts = "--capture=no --color=yes --runslow --verbose -rA"
+log_cli = true
+log_cli_level = "INFO"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
 [tool.setuptools.dynamic]
-version = { attr = "_version.__version__" }
+version = { file = "src/version.txt" }

@@ -1,5 +1,0 @@
---editable .[test]
---requirement requirements.txt
-pre-commit
-pytest
-python-on-whales

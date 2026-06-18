@@ -14,7 +14,7 @@ from .utils import RedactedPrinter
 
 MAIN_SERVICE_NAME = "weewx"
 REDACTION_REGEXES: List[re.Pattern] = []
-VERSION_FILE = "src/_version.py"
+VERSION_FILE = "src/version.txt"
 VERSION_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-version"
 GEN_TEST_CONFIG_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-gen-test-config"
 
@@ -88,29 +88,15 @@ def version_container(image_tag):
 @pytest.fixture(scope="session")
 def project_version():
     """Get the project version."""
-    pkg_vars = {}
     with open(VERSION_FILE) as f:
-        exec(f.read(), pkg_vars)  # nosec
-    return pkg_vars["__version__"]
+        version = f.read().strip()
+    return version
 
 
 @pytest.fixture(scope="session")
 def redacted_printer():
     """Return a configured redacted printer object."""
     return RedactedPrinter(REDACTION_REGEXES)
-
-
-def pytest_addoption(parser):
-    """Add new commandline options to pytest."""
-    parser.addoption(
-        "--runslow", action="store_true", default=False, help="run slow tests"
-    )
-    parser.addoption(
-        "--image-tag",
-        action="store",
-        default="local/test-image:latest",
-        help="image tag to test",
-    )
 
 
 @pytest.fixture(scope="session")

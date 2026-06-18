@@ -9,7 +9,7 @@ CONF_FILE="${WEEWX_ROOT}/weewx.conf"
 
 # echo version
 if [ $# -gt 0 ] && [ "$1" = "--version" ]; then
-  python -c "import _version; print(_version.__version__)"
+  cat "$(dirname "$0")/image_version.txt"
   exit 0
 fi
 

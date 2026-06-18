@@ -1,44 +1,42 @@
 ---
+name: Config
 
-name: config
+permissions: {}
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
       platforms:
-        description: "The platforms to build (CSV)"
-        default: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64,linux/s390x
+        description: The platforms to build (JSON array string)
+        default: >-
+          ["linux/amd64","linux/arm/v6","linux/arm/v7","linux/arm64","linux/ppc64le","linux/riscv64","linux/s390x"]
         required: false
         type: string
     outputs:
+      container_version:
+        description: The container version from src/version.txt
+        value: ${{ jobs.config.outputs.container_version }}
       image_name:
-        description: "The Docker image name"
+        description: The container image name
         value: felddy/weewx
-      data_artifact_name:
-        description: "The name of the test data artifact"
-        value: test-output
-      data_artifact_path:
-        description: "The path to include in the test data artifact"
-        value: data
-      image_artifact_name_stem:
-        description: "The name of the image archives artifact"
-        value: image-archive
       platforms:
-        description: "The platforms to build (CSV)"
+        description: The platforms to build (JSON array string)
         value: ${{ inputs.platforms }}
-      platforms_json:
-        description: "The platforms to build (JSON)"
-        value: ${{ jobs.csv-to-json.outputs.json }}
-      sbom_artifact_name_stem:
-        description: "The stem name for sbom artifacts"
-        value: sbom
-      test_platform:
-        description: "The platform to use for testing"
-        value: linux/amd64
+      test_platforms:
+        description: The platform to use for testing (JSON array string)
+        value: '["linux/amd64"]'
 
 jobs:
-  csv-to-json:
-    name: "Convert CSV to JSON"
-    uses: felddy/reusable-workflows/.github/workflows/csv-to-json.yml@v3
-    with:
-      csv: ${{ inputs.platforms }}
+  config:
+    name: Configuration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      container_version: ${{ steps.version.outputs.container_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # tag=v6.0.3
+      - name: Emit version outputs
+        id: version
+        run: make github-output >> "$GITHUB_OUTPUT"

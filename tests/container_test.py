@@ -9,7 +9,7 @@ import time
 import pytest
 
 READY_MESSAGE = "engine: Starting main packet loop"
-VERSION_FILE = "src/_version.py"
+VERSION_FILE = "src/version.txt"
 
 
 def test_gen_config(gen_test_config_container):
