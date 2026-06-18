@@ -47,6 +47,10 @@ def gen_test_config_container(image_tag):
         command="--gen-test-config",
         detach=True,
         name=GEN_TEST_CONFIG_SERVICE_NAME,
+        # Run as the host user so the container can write to the bind-mounted
+        # ./data directory (owned by the host/runner user, not the image's
+        # uid 1000 "weewx" user).
+        user=f"{os.getuid()}:{os.getgid()}",
         volumes={str(Path.cwd() / Path("data")): {"bind": "/data", "driver": "local"}},
     )
     yield container
@@ -66,6 +70,10 @@ def main_container(image_tag):
         },
         name=MAIN_SERVICE_NAME,
         ports={},
+        # Run as the host user so the container can write to the bind-mounted
+        # ./data directory (owned by the host/runner user, not the image's
+        # uid 1000 "weewx" user).
+        user=f"{os.getuid()}:{os.getgid()}",
         volumes={str(Path.cwd() / Path("data")): {"bind": "/data", "driver": "local"}},
     )
     yield container
