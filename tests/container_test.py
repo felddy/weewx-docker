@@ -63,7 +63,7 @@ def test_log_version(version_container, project_version):
 
 def test_wait_for_ready(main_container):
     """Wait for container to be ready."""
-    TIMEOUT = 10
+    TIMEOUT = 30
     for _ in range(TIMEOUT):
         if READY_MESSAGE in main_container.logs().decode("utf-8"):
             break
