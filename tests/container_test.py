@@ -87,10 +87,13 @@ def test_release_version(project_version):
 
 
 # The container version label is added during the GitHub Actions build workflow.
-# It will not be present if the container is built locally.
-# Skip this check if we are not running in GitHub Actions.
+# It is derived from the git ref, so it only equals the project version on
+# release builds (branch/PR/schedule builds are tagged sha-*, edge, etc.).
+# Skip this check unless we are running a GitHub Actions release build.
 @pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTIONS") != "true", reason="not running in GitHub Actions"
+    os.environ.get("GITHUB_ACTIONS") != "true"
+    or os.environ.get("GITHUB_EVENT_NAME") != "release",
+    reason="only checked during GitHub Actions release builds",
 )
 def test_container_version_label_matches(version_container, project_version):
     """Verify the container version label is the correct version."""

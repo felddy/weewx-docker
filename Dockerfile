@@ -1,42 +1,32 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.13.11
-ARG UV_VERSION=0.9
 ARG WEEWX_UID=1000
 ARG WEEWX_HOME="/home/weewx"
 
-# uv binary source stage
-FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv-stage
-
 FROM python:${PYTHON_VERSION} AS build-stage
 
-# Bring in the uv binary from the pinned uv image.
-COPY --from=uv-stage /uv /uvx /bin/
-
+# clang/lld are used to build any dependencies that ship only as source
+# distributions on the less common target platforms.
 RUN apt-get update && apt-get install -y clang lld
 
-# uv configuration:
-#   - place the managed virtual environment at a well-known path
-#   - compile bytecode for faster container start-up
-#   - copy (rather than hardlink) packages so the venv is self-contained
-#   - use the image's system Python (never download a managed interpreter) so
-#     the resulting /opt/venv is valid when copied into the slim final stage
-ENV UV_PROJECT_ENVIRONMENT=/opt/venv
-ENV UV_COMPILE_BYTECODE=1
-ENV UV_LINK_MODE=copy
-ENV UV_PYTHON=/usr/local/bin/python3
-ENV UV_PYTHON_DOWNLOADS=never
+# Create the virtual environment that will be copied into the final stage.
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-WORKDIR /app
+WORKDIR /tmp/build
 
-# Copy only the files needed to resolve and install the dependencies. The
-# dynamic project version is read from src/version.txt, so it must be present.
-COPY pyproject.toml uv.lock README.md ./
+# Copy only the files needed to build and install the project. The dynamic
+# project version is read from src/version.txt, so it must be present.
+COPY pyproject.toml README.md ./
 COPY src/version.txt ./src/version.txt
 
-# Install only the runtime dependencies (no dev/test groups, no editable
-# install of the project itself) into /opt/venv.
-RUN uv sync --frozen --no-default-groups --no-install-project
+# Install the project and its runtime dependencies (weewx, etc.) into /opt/venv.
+# pip is used here (rather than uv) because the image is built for many
+# architectures -- including linux/arm/v6, linux/arm/v7, linux/riscv64,
+# linux/ppc64le, and linux/s390x -- for which uv does not publish binaries.
+RUN pip install --no-cache-dir --upgrade pip \
+  && pip install --no-cache-dir .
 
 FROM python:${PYTHON_VERSION}-slim AS final-stage
 
