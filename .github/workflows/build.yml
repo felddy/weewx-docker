@@ -93,6 +93,37 @@ jobs:
       image-name: ${{ needs.config.outputs.image_name }}
       platforms: ${{ needs.config.outputs.test_platforms }}
 
+  ci-gate:
+    name: CI Gate
+    # Single aggregate status check required by branch protection. Keeping this
+    # job's NAME stable means reworking the jobs above never requires editing
+    # the ruleset again -- only this job's `needs:` list, which lives in code
+    # and is reviewed like any other change.
+    needs:
+      - config
+      - lint
+      - diagnostics
+      - build
+      - test
+    # `always()` ensures the gate runs (and can fail) even when a dependency
+    # fails or is skipped; without it a failed/skipped dependency would skip
+    # this job and branch protection would read the absent check as green.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs succeeded
+        run: |
+          # These jobs run on every event and must pass:
+          [[ "${{ needs.config.result }}"      == success ]] || { echo "config: ${{ needs.config.result }}";           exit 1; }
+          [[ "${{ needs.lint.result }}"        == success ]] || { echo "lint: ${{ needs.lint.result }}";               exit 1; }
+          [[ "${{ needs.diagnostics.result }}" == success ]] || { echo "diagnostics: ${{ needs.diagnostics.result }}"; exit 1; }
+          # build/test run on same-repo PRs but are skipped on fork PRs (no
+          # secrets are available); accept success or skipped, reject
+          # failure/cancelled:
+          [[ "${{ needs.build.result }}" =~ ^(success|skipped)$ ]] || { echo "build: ${{ needs.build.result }}"; exit 1; }
+          [[ "${{ needs.test.result }}"  =~ ^(success|skipped)$ ]] || { echo "test: ${{ needs.test.result }}";   exit 1; }
+          echo "All required jobs passed."
+
   publish-manifest:
     name: Publish Manifest
     needs:
