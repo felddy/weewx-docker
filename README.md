@@ -61,6 +61,34 @@ services:
     docker compose up --detach
     ```
 
+## Running as a different user ##
+
+By default the container runs as the non-root `weewx` user (uid/gid
+`1000`), which is why the `data` directory is assigned to `1000:1000` in
+the steps above.
+
+The container also supports running under an **arbitrary `uid:gid`**.
+
+```yaml
+services:
+  weewx:
+    image: felddy/weewx:5
+    user: "1234:1234"
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+```
+
+The only requirement is that the volume mounted at `/data` be writable
+by the `uid` the container runs as.  For a bind mount, make the host
+directory writable by that user:
+
+```console
+mkdir data
+chown 1234:1234 data
+```
+
 ## Upgrading ##
 
 1. Stop the running container:

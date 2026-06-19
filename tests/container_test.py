@@ -13,7 +13,7 @@ VERSION_FILE = "src/version.txt"
 
 
 def test_gen_config(gen_test_config_container):
-    """Test that the test configuration generator has completed."""
+    """Test that the test configuration generator completed successfully."""
     # Wait until the container has exited or timeout.
 
     for _ in range(10):
@@ -21,7 +21,13 @@ def test_gen_config(gen_test_config_container):
         if gen_test_config_container.status == "exited":
             break
         time.sleep(1)
-    assert gen_test_config_container.status in ("exited")
+    assert gen_test_config_container.status == "exited", "config generator did not exit"
+    # The container must exit cleanly: a non-zero exit code means configuration
+    # generation failed (e.g. weectl crashing), which would otherwise be masked
+    # by only checking that the container reached the "exited" state.
+    assert (
+        gen_test_config_container.wait()["StatusCode"] == 0
+    ), "The configuration generator did not exit cleanly"
 
 
 @pytest.mark.parametrize(

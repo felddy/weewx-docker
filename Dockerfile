@@ -47,7 +47,10 @@ LABEL org.opencontainers.image.vendor="Geekpad"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
-RUN apt-get update && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6
+# libnss-wrapper lets the entrypoint synthesize passwd/group entries at runtime
+# so the container works under an arbitrary uid:gid (rootless / Kubernetes
+# runAsUser) without write access to /etc/passwd. See src/entrypoint.sh.
+RUN apt-get update && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6 libnss-wrapper
 
 WORKDIR ${WEEWX_HOME}
 
@@ -56,11 +59,16 @@ COPY src/entrypoint.sh ./
 
 RUN echo "${CONTAINER_VERSION}" > image_version.txt \
   && chmod a+rx entrypoint.sh \
+  && chmod a+rx "${WEEWX_HOME}" \
   && mkdir /data \
-  && chown -R weewx:weewx /data
+  && chown -R weewx:weewx /data \
+  && chmod a+rwx /data
 
 VOLUME ["/data"]
 
+# Default to the non-root "weewx" user (uid/gid 1000). The container also
+# supports being run under an arbitrary uid:gid; see src/entrypoint.sh.
+ENV HOME="${WEEWX_HOME}"
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PIP_TARGET="/data/lib/python/site-packages"
 ENV PYTHONPATH="/data/lib/python/site-packages"
