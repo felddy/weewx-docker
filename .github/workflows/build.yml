@@ -105,10 +105,13 @@ jobs:
       - diagnostics
       - build
       - test
-    # `always()` ensures the gate runs (and can fail) even when a dependency
-    # fails or is skipped; without it a failed/skipped dependency would skip
-    # this job and branch protection would read the absent check as green.
-    if: always()
+    # Run whether dependencies succeed, fail, or are skipped so the gate can
+    # evaluate their results -- but NOT when the run itself is cancelled (for
+    # example when superseded via `concurrency`). `always()` would execute
+    # even during cancellation and report a spurious failure; `!cancelled()`
+    # still runs when a dependency *fails* (failure is not cancellation), so
+    # genuine failures are caught while cancelled runs simply skip the gate.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Verify required jobs succeeded
