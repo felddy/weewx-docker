@@ -44,10 +44,15 @@ LONGOPTS="force,help,install-hooks,list-versions,python-version:"
 # Define short options for getopt
 SHORTOPTS="fhilp:"
 
-# Check for GNU getopt by testing for long option support. GNU getopt supports
-# the "--test" option and will return exit code 4 while POSIX/BSD getopt does
-# not and will return exit code 0.
-if getopt --test > /dev/null 2>&1; then
+# Check for GNU getopt, which is required for the long-option parsing below.
+# GNU getopt's "--test" probe exits with status 4; other implementations
+# (BSD/macOS getopt, POSIX getopt) exit with a different status. Capture the
+# status without tripping `errexit` (the `|| ...` keeps it happy) and require
+# exactly 4 -- testing only for a zero exit would miss implementations that
+# exit non-zero but are still not GNU getopt.
+getopt_test_rc=0
+getopt --test > /dev/null 2>&1 || getopt_test_rc=$?
+if [ "$getopt_test_rc" -ne 4 ]; then
   cat << 'END_OF_LINE'
 
   Please note, this script requires GNU getopt due to its enhanced
@@ -179,8 +184,10 @@ fi
 # shellcheck disable=SC1091
 source .venv/bin/activate
 
-# Install all necessary mypy type stubs.
-mypy --install-types src/
+# Install all necessary mypy type stubs.  `--non-interactive` keeps this safe
+# to run unattended (CI/automation): mypy installs missing stubs without
+# prompting instead of waiting on stdin.
+mypy --install-types --non-interactive src/
 
 # Install git pre-commit hooks now or later.
 pre-commit install ${INSTALL_HOOKS:+"--install-hooks"}
@@ -213,6 +220,10 @@ else:
     print(f'Unsupported lineage version: {lineage["version"]}', file=sys.stderr)
 END_OF_LINE
 )"
+
+# Re-enable errexit now that the best-effort remote configuration is complete,
+# so any failure in the remaining steps still aborts the script.
+set -o errexit
 
 # Deactivate the virtual environment now that setup is complete.
 deactivate

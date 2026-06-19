@@ -57,12 +57,17 @@ WORKDIR ${WEEWX_HOME}
 COPY --from=build-stage /opt/venv /opt/venv
 COPY src/entrypoint.sh ./
 
+# /data is owned by weewx but made world-writable with the sticky bit (1777,
+# like /tmp): the container may run under an arbitrary uid:gid (rootless /
+# Kubernetes), and the sticky bit still prevents users from removing files
+# they do not own. A mounted volume's own permissions take precedence at run
+# time; this only governs the bare image directory.
 RUN echo "${CONTAINER_VERSION}" > image_version.txt \
   && chmod a+rx entrypoint.sh \
   && chmod a+rx "${WEEWX_HOME}" \
   && mkdir /data \
   && chown -R weewx:weewx /data \
-  && chmod a+rwx /data
+  && chmod 1777 /data
 
 VOLUME ["/data"]
 
