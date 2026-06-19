@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 dependencies = ["ephem", "pyserial", "pyusb", "setuptools", "weewx == 5.3.0"]
@@ -32,7 +33,7 @@ homepage = "https://github.com/felddy"
 issues = "https://github.com/felddy/weewx-docker/issues"
 source = "https://github.com/felddy/weewx-docker"
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
     "coverage",
     "coveralls",
@@ -40,8 +41,22 @@ test = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "semver",
+]
+dev = ["ipython", "mypy", "semver", { include-group = "test" }]
+
+[tool.pytest.ini_options]
+addopts = "--capture=no --color=yes --runslow --verbose -rA"
+log_cli = true
+log_cli_level = "INFO"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
+[tool.setuptools]
+# This project is a dependency-only meta-package: it pins weewx and its runtime
+# dependencies but ships no importable modules of its own. Declare that
+# explicitly so the build backend does not attempt package auto-discovery.
+py-modules = []
+
 [tool.setuptools.dynamic]
-version = { attr = "_version.__version__" }
+version = { file = "src/version.txt" }

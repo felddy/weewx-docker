@@ -48,3 +48,17 @@ updates:
         applies-to: "version-updates"
         patterns:
           - "*"
+
+  - directory: /
+    package-ecosystem: uv
+    schedule:
+      interval: "daily"
+    labels:
+      - "bot :robot:"
+      - "dependencies :game_die:"
+      - "python :snake:"
+    groups:
+      uv-all:
+        applies-to: "version-updates"
+        patterns:
+          - "*"

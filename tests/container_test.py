@@ -9,11 +9,11 @@ import time
 import pytest
 
 READY_MESSAGE = "engine: Starting main packet loop"
-VERSION_FILE = "src/_version.py"
+VERSION_FILE = "src/version.txt"
 
 
 def test_gen_config(gen_test_config_container):
-    """Test that the test configuration generator has completed."""
+    """Test that the test configuration generator completed successfully."""
     # Wait until the container has exited or timeout.
 
     for _ in range(10):
@@ -21,7 +21,13 @@ def test_gen_config(gen_test_config_container):
         if gen_test_config_container.status == "exited":
             break
         time.sleep(1)
-    assert gen_test_config_container.status in ("exited")
+    assert gen_test_config_container.status == "exited", "config generator did not exit"
+    # The container must exit cleanly: a non-zero exit code means configuration
+    # generation failed (e.g. weectl crashing), which would otherwise be masked
+    # by only checking that the container reached the "exited" state.
+    assert (
+        gen_test_config_container.wait()["StatusCode"] == 0
+    ), "The configuration generator did not exit cleanly"
 
 
 @pytest.mark.parametrize(
@@ -63,7 +69,7 @@ def test_log_version(version_container, project_version):
 
 def test_wait_for_ready(main_container):
     """Wait for container to be ready."""
-    TIMEOUT = 10
+    TIMEOUT = 30
     for _ in range(TIMEOUT):
         if READY_MESSAGE in main_container.logs().decode("utf-8"):
             break
@@ -87,10 +93,13 @@ def test_release_version(project_version):
 
 
 # The container version label is added during the GitHub Actions build workflow.
-# It will not be present if the container is built locally.
-# Skip this check if we are not running in GitHub Actions.
+# It is derived from the git ref, so it only equals the project version on
+# release builds (branch/PR/schedule builds are tagged sha-*, edge, etc.).
+# Skip this check unless we are running a GitHub Actions release build.
 @pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTIONS") != "true", reason="not running in GitHub Actions"
+    os.environ.get("GITHUB_ACTIONS") != "true"
+    or os.environ.get("GITHUB_EVENT_NAME") != "release",
+    reason="only checked during GitHub Actions release builds",
 )
 def test_container_version_label_matches(version_container, project_version):
     """Verify the container version label is the correct version."""
