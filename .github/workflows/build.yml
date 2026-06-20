@@ -8,7 +8,8 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
   push:
     branches:
-      - "**"
+      - develop
+      - develop-*
     tags:
       - "v*.*.*"
   release:
@@ -33,9 +34,17 @@ defaults:
     shell: bash -Eueo pipefail -x {0}
 
 concurrency:
-  group: >-
-    ${{ github.workflow }}-${{
-      github.event.pull_request.head.ref || github.ref_name }}
+  # Key the group on the fully-qualified ref so each event type gets its own
+  # lane: pushes use `refs/heads/<branch>`, pull requests use
+  # `refs/pull/<n>/merge`, and the merge queue uses its own ref. Because those
+  # namespaces never overlap, a pull_request run can no longer cancel the push
+  # run for the same branch (and vice versa). That cross-event cancellation
+  # left a cancelled `CI Gate` status check on the head commit, which branch
+  # protection treated as a failing required check and refused to merge.
+  # cancel-in-progress still supersedes older runs *within* a ref (a new push
+  # or a new PR sync), which is safe because required checks are only
+  # evaluated against the latest commit SHA.
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
