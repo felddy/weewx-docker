@@ -3,12 +3,12 @@ CONTAINER_VERSION := $(shell tr -d '[:space:]' < src/version.txt)
 # Container image repository.
 IMAGE := ghcr.io/felddy/weewx
 
-# GitHub repository and the branch-protection ruleset managed as code.
-# The ruleset ID is resolved at run time by name, so it is not hardcoded.
+# GitHub repository and the directory of branch/tag rulesets managed as code.
+# Ruleset IDs are resolved at run time by name, so they are not hardcoded.
 # See .github/rulesets/README.md for what the JSON contains (and a decoder
 # for the GitHub App IDs it references).
 REPO := felddy/weewx-docker
-RULESET_FILE := .github/rulesets/development.json
+RULESET_DIR := .github/rulesets
 
 .PHONY: guard-version guard-gh build test version github-output help release apply-ruleset export-ruleset
 
@@ -48,37 +48,41 @@ release: guard-version
 guard-gh:
 	@command -v gh >/dev/null 2>&1 || { echo "ERROR: gh (GitHub CLI) is required" >&2; exit 1; }
 
-## apply-ruleset: create or update the ruleset from RULESET_FILE (ID resolved by name).
+## apply-ruleset: create or update every ruleset in RULESET_DIR (IDs resolved by name).
 apply-ruleset: guard-gh
-	@test -f "$(RULESET_FILE)" || { echo "ERROR: $(RULESET_FILE) not found" >&2; exit 1; }
-	@name=$$(jq -r '.name' "$(RULESET_FILE)"); \
-	id=$$(gh api "repos/$(REPO)/rulesets" --jq ".[] | select(.name == \"$$name\") | .id" | head -n1); \
-	if [ -n "$$id" ]; then \
-	  echo "Updating ruleset '$$name' (id $$id) in $(REPO)"; \
-	  gh api --method PUT "repos/$(REPO)/rulesets/$$id" --input "$(RULESET_FILE)" >/dev/null; \
-	else \
-	  echo "Creating ruleset '$$name' in $(REPO)"; \
-	  gh api --method POST "repos/$(REPO)/rulesets" --input "$(RULESET_FILE)" >/dev/null; \
-	fi; \
+	@test -n "$$(ls $(RULESET_DIR)/*.json 2>/dev/null)" || { echo "ERROR: no ruleset files in $(RULESET_DIR)" >&2; exit 1; }
+	@for f in $(RULESET_DIR)/*.json; do \
+	  name=$$(jq -r '.name' "$$f"); \
+	  id=$$(gh api "repos/$(REPO)/rulesets" --jq ".[] | select(.name == \"$$name\") | .id" | head -n1); \
+	  if [ -n "$$id" ]; then \
+	    echo "Updating ruleset '$$name' (id $$id) in $(REPO)"; \
+	    gh api --method PUT "repos/$(REPO)/rulesets/$$id" --input "$$f" >/dev/null; \
+	  else \
+	    echo "Creating ruleset '$$name' in $(REPO)"; \
+	    gh api --method POST "repos/$(REPO)/rulesets" --input "$$f" >/dev/null; \
+	  fi; \
+	done; \
 	echo "Done."
 
-## export-ruleset: overwrite RULESET_FILE with the live ruleset (read-only fields stripped).
+## export-ruleset: overwrite each file in RULESET_DIR from its live ruleset.
 export-ruleset: guard-gh
-	@test -f "$(RULESET_FILE)" || { echo "ERROR: $(RULESET_FILE) not found" >&2; exit 1; }
-	@name=$$(jq -r '.name' "$(RULESET_FILE)"); \
-	id=$$(gh api "repos/$(REPO)/rulesets" --jq ".[] | select(.name == \"$$name\") | .id" | head -n1); \
-	if [ -z "$$id" ]; then echo "ERROR: no ruleset named '$$name' in $(REPO)" >&2; exit 1; fi; \
-	gh api "repos/$(REPO)/rulesets/$$id" \
-	  | jq '{name, target, enforcement, conditions, bypass_actors, rules}' > "$(RULESET_FILE).tmp"; \
-	mv "$(RULESET_FILE).tmp" "$(RULESET_FILE)"; \
-	echo "Wrote $(RULESET_FILE) from ruleset '$$name' (id $$id)"
+	@test -n "$$(ls $(RULESET_DIR)/*.json 2>/dev/null)" || { echo "ERROR: no ruleset files in $(RULESET_DIR)" >&2; exit 1; }
+	@for f in $(RULESET_DIR)/*.json; do \
+	  name=$$(jq -r '.name' "$$f"); \
+	  id=$$(gh api "repos/$(REPO)/rulesets" --jq ".[] | select(.name == \"$$name\") | .id" | head -n1); \
+	  if [ -z "$$id" ]; then echo "ERROR: no ruleset named '$$name' in $(REPO)" >&2; exit 1; fi; \
+	  gh api "repos/$(REPO)/rulesets/$$id" \
+	    | jq '{name, target, enforcement, conditions, bypass_actors, rules}' > "$$f.tmp"; \
+	  mv "$$f.tmp" "$$f"; \
+	  echo "Wrote $$f from ruleset '$$name' (id $$id)"; \
+	done
 
 ## help: list the developer-invocable targets.
 help:
 	@echo "Available targets:"
-	@echo "  apply-ruleset  Create/update the branch protection ruleset (resolved by name)."
+	@echo "  apply-ruleset  Create/update the branch and tag protection rulesets (resolved by name)."
 	@echo "  build          Build the container image tagged with the CONTAINER_VERSION."
-	@echo "  export-ruleset Overwrite the ruleset JSON file from the live ruleset."
+	@echo "  export-ruleset Overwrite the ruleset JSON files from the live rulesets."
 	@echo "  github-output  Print key=value lines for CI."
 	@echo "  help           Show this help message."
 	@echo "  README.md      Render README.md from README.md.j2 using the version."
