@@ -84,9 +84,12 @@ jobs:
       dockerfile: ./Dockerfile
       scan-severity: CRITICAL,HIGH
       # GitHub code scanning only accepts SARIF tied to a branch ref or a pull
-      # request, so skip the Security-tab upload on tag pushes (refs/tags/*)
-      # and release events, where codeql-action fails with "GITHUB_REF ... must
-      # be set". The scan still runs; only the upload is skipped on those refs.
+      # request, so upload only for PRs, the merge queue, and branch refs
+      # (refs/heads/*, which also covers scheduled and dispatch runs on a
+      # branch). Skip it on release events and tag refs (refs/tags/*), where
+      # codeql-action has no branch to attach results to and fails with
+      # "GITHUB_REF ... must be set". The scan still runs; only the
+      # Security-tab upload is skipped on those refs.
       upload-scan-results: >-
         ${{ github.event_name == 'pull_request'
           || github.event_name == 'merge_group'
