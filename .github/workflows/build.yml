@@ -10,8 +10,6 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - develop
       - develop-*
-    tags:
-      - "v*.*.*"
   release:
     types:
       - edited
@@ -85,6 +83,14 @@ jobs:
       context: .
       dockerfile: ./Dockerfile
       scan-severity: CRITICAL,HIGH
+      # GitHub code scanning only accepts SARIF tied to a branch ref or a pull
+      # request, so skip the Security-tab upload on tag pushes (refs/tags/*)
+      # and release events, where codeql-action fails with "GITHUB_REF ... must
+      # be set". The scan still runs; only the upload is skipped on those refs.
+      upload-scan-results: >-
+        ${{ github.event_name == 'pull_request'
+          || github.event_name == 'merge_group'
+          || startsWith(github.ref, 'refs/heads/') }}
       build-args: |
         CONTAINER_VERSION=${{ needs.config.outputs.container_version }}
 
