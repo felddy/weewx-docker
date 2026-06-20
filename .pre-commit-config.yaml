@@ -187,6 +187,16 @@ repos:
         files: ^uv.lock$
         pass_filenames: false
 
+  # Render-consistency hooks
+  - repo: local
+    hooks:
+      - id: render-docs-check
+        name: render-docs-check
+        language: system
+        entry: ./render-docs-check
+        files: ^(README\.md|README\.md\.j2|src/version\.txt)$
+        pass_filenames: false
+
   # Ansible hooks
   - repo: https://github.com/ansible/ansible-lint
     rev: v25.11.1

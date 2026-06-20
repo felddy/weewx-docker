@@ -24,6 +24,10 @@ build: guard-version
 test: guard-version
 	uv run --group dev pytest tests/ --image-tag $(IMAGE):$(CONTAINER_VERSION)
 
+## README.md: render the documentation from its template using the version.
+README.md: README.md.j2 src/version.txt guard-version
+	uv run --group dev python render_docs.py README.md.j2 README.md $(CONTAINER_VERSION)
+
 ## version: print the derived CONTAINER_VERSION.
 version: guard-version
 	@echo "Container : $(CONTAINER_VERSION)"
@@ -32,10 +36,13 @@ version: guard-version
 github-output: guard-version
 	@echo "container_version=$(CONTAINER_VERSION)"
 
-## release: set an explicit version and commit (make release VERSION=x.y.z).
+## release: set an explicit version, re-render docs, and commit (make release VERSION=x.y.z).
 release: guard-version
 	@test -n "$(VERSION)" || { echo "ERROR: VERSION is required (make release VERSION=x.y.z)" >&2; exit 1; }
 	./bump-version set $(VERSION)
+	$(MAKE) README.md
+	git add README.md
+	git commit --message "Render docs for $(VERSION)"
 
 ## guard-gh: fail loudly if the GitHub CLI is unavailable.
 guard-gh:
@@ -74,6 +81,7 @@ help:
 	@echo "  export-ruleset Overwrite the ruleset JSON file from the live ruleset."
 	@echo "  github-output  Print key=value lines for CI."
 	@echo "  help           Show this help message."
-	@echo "  release        Set VERSION and commit (make release VERSION=x.y.z)."
+	@echo "  README.md      Render README.md from README.md.j2 using the version."
+	@echo "  release        Set VERSION, re-render docs, and commit (make release VERSION=x.y.z)."
 	@echo "  test           Run the test suite (uv run pytest tests/)."
 	@echo "  version        Print the derived CONTAINER_VERSION."

@@ -28,7 +28,7 @@ name: "weewx"
 
 services:
   weewx:
-    image: felddy/weewx:5
+    image: felddy/weewx:{{ major_version }}
     volumes:
       - type: bind
         source: ./data
@@ -72,7 +72,7 @@ The container also supports running under an **arbitrary `uid:gid`**.
 ```yaml
 services:
   weewx:
-    image: felddy/weewx:5
+    image: felddy/weewx:{{ major_version }}
     user: "1234:1234"
     volumes:
       - type: bind
@@ -136,7 +136,7 @@ output in the container logs:
 ## Installing WeeWX Extensions ##
 
 If arguments are passed to the container, they are forwarded on to the
-[`weectl`](https://weewx.com/docs/5.3/utilities/weectl-about/) command.  This
+[`weectl`](https://weewx.com/docs/{{ major_minor_version }}/utilities/weectl-about/) command.  This
 can be used to install extensions:
 
 ```console
@@ -169,16 +169,16 @@ versions](https://semver.org) that align with the [version and build of
 WeeWX](https://weewx.com/docs.html) that they support.
 
 > [!TIP]
-> It is recommended that users use the major version tag: `:5` Using the major
+> It is recommended that users use the major version tag: `:{{ major_version }}` Using the major
 > tag will ensure that you receive the most recent version of the software that
 > is compatible with your saved data, and prevents inadvertent upgrades to a new
 > major version.
 
 | Image:tag            | Description                                                                             |
 | -------------------- | --------------------------------------------------------------------------------------- |
-| `felddy/weewx:5`     | The most recent image matching the major version number.  Most users will use this tag. |
-| `felddy/weewx:5.3`   | The most recent image matching the major and minor version numbers.                     |
-| `felddy/weewx:5.3.0` | An exact image version.                                                                 |
+| `felddy/weewx:{{ major_version }}`     | The most recent image matching the major version number.  Most users will use this tag. |
+| `felddy/weewx:{{ major_minor_version }}`   | The most recent image matching the major and minor version numbers.                     |
+| `felddy/weewx:{{ container_version }}` | An exact image version.                                                                 |
 
 See the [tags tab](https://hub.docker.com/r/felddy/weewx/tags) on Docker
 Hub for a list of all the supported tags.
@@ -187,7 +187,7 @@ Hub for a list of all the supported tags.
 
 | Mount point | Purpose                                                                                           |
 | ----------- | ------------------------------------------------------------------------------------------------- |
-| `/data`     | [WeeWX root](https://weewx.com/docs/5.3/usersguide/where/#location-of-weewx-components) directory |
+| `/data`     | [WeeWX root](https://weewx.com/docs/{{ major_minor_version }}/usersguide/where/#location-of-weewx-components) directory |
 
 ## Building from source ##
 
@@ -195,7 +195,7 @@ Build the image locally using this git repository as the [build context](https:/
 
 ```console
 docker build \
-  --tag felddy/weewx:5.3.0 \
+  --tag felddy/weewx:{{ container_version }} \
   https://github.com/felddy/weewx-docker.git#develop
 ```
 
@@ -219,7 +219,7 @@ Docker:
     docker buildx build \
       --platform linux/amd64 \
       --output type=docker \
-      --tag felddy/weewx:5.3.0 .
+      --tag felddy/weewx:{{ container_version }} .
     ```
 
 ## Contributing ##
