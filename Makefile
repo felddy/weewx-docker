@@ -10,7 +10,7 @@ IMAGE := ghcr.io/felddy/weewx
 REPO := felddy/weewx-docker
 RULESET_DIR := .github/rulesets
 
-.PHONY: guard-version guard-gh build test version github-output help release apply-ruleset export-ruleset
+.PHONY: guard-version guard-gh guard-jq build test version github-output help release apply-ruleset export-ruleset
 
 ## guard-version: fail loudly if the version source is missing or empty.
 guard-version:
@@ -48,12 +48,17 @@ release: guard-version
 guard-gh:
 	@command -v gh >/dev/null 2>&1 || { echo "ERROR: gh (GitHub CLI) is required" >&2; exit 1; }
 
+## guard-jq: fail loudly if jq is unavailable.
+guard-jq:
+	@command -v jq >/dev/null 2>&1 || { echo "ERROR: jq is required" >&2; exit 1; }
+
 ## apply-ruleset: create or update every ruleset in RULESET_DIR (IDs resolved by name).
-apply-ruleset: guard-gh
+apply-ruleset: guard-gh guard-jq
 	@test -n "$$(ls $(RULESET_DIR)/*.json 2>/dev/null)" || { echo "ERROR: no ruleset files in $(RULESET_DIR)" >&2; exit 1; }
-	@for f in $(RULESET_DIR)/*.json; do \
+	@set -e; \
+	for f in $(RULESET_DIR)/*.json; do \
 	  name=$$(jq -r '.name' "$$f"); \
-	  id=$$(gh api "repos/$(REPO)/rulesets" --jq ".[] | select(.name == \"$$name\") | .id" | head -n1); \
+	  id=$$(gh api "repos/$(REPO)/rulesets" --jq "[.[] | select(.name == \"$$name\") | .id][0] // empty"); \
 	  if [ -n "$$id" ]; then \
 	    echo "Updating ruleset '$$name' (id $$id) in $(REPO)"; \
 	    gh api --method PUT "repos/$(REPO)/rulesets/$$id" --input "$$f" >/dev/null; \
@@ -65,14 +70,15 @@ apply-ruleset: guard-gh
 	echo "Done."
 
 ## export-ruleset: overwrite each file in RULESET_DIR from its live ruleset.
-export-ruleset: guard-gh
+export-ruleset: guard-gh guard-jq
 	@test -n "$$(ls $(RULESET_DIR)/*.json 2>/dev/null)" || { echo "ERROR: no ruleset files in $(RULESET_DIR)" >&2; exit 1; }
-	@for f in $(RULESET_DIR)/*.json; do \
+	@set -e; \
+	for f in $(RULESET_DIR)/*.json; do \
 	  name=$$(jq -r '.name' "$$f"); \
-	  id=$$(gh api "repos/$(REPO)/rulesets" --jq ".[] | select(.name == \"$$name\") | .id" | head -n1); \
+	  id=$$(gh api "repos/$(REPO)/rulesets" --jq "[.[] | select(.name == \"$$name\") | .id][0] // empty"); \
 	  if [ -z "$$id" ]; then echo "ERROR: no ruleset named '$$name' in $(REPO)" >&2; exit 1; fi; \
-	  gh api "repos/$(REPO)/rulesets/$$id" \
-	    | jq '{name, target, enforcement, conditions, bypass_actors, rules}' > "$$f.tmp"; \
+	  raw=$$(gh api "repos/$(REPO)/rulesets/$$id"); \
+	  printf '%s\n' "$$raw" | jq '{name, target, enforcement, conditions, bypass_actors, rules}' > "$$f.tmp"; \
 	  mv "$$f.tmp" "$$f"; \
 	  echo "Wrote $$f from ruleset '$$name' (id $$id)"; \
 	done

@@ -11,8 +11,8 @@ identified by its `name` field rather than a numeric ID so nothing is
 hardcoded.  The Makefile targets operate on every `*.json` file here, so
 adding or removing a ruleset is just a matter of adding or removing a file.
 
-Managing rulesets requires the GitHub CLI (`gh`), authenticated as a
-repository admin.
+Managing rulesets requires the GitHub CLI (`gh`) and `jq`, with `gh`
+authenticated as a repository admin.
 
 ## Applying ##
 
