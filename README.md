@@ -136,7 +136,7 @@ output in the container logs:
 ## Installing WeeWX Extensions ##
 
 If arguments are passed to the container, they are forwarded on to the
-[`weectl`](https://weewx.com/docs/5.3/utilities/weectl-about/) command.  This
+[`weectl`](https://weewx.com/docs/5.4/utilities/weectl-about/) command.  This
 can be used to install extensions:
 
 ```console
@@ -177,8 +177,8 @@ WeeWX](https://weewx.com/docs.html) that they support.
 | Image:tag            | Description                                                                             |
 | -------------------- | --------------------------------------------------------------------------------------- |
 | `felddy/weewx:5`     | The most recent image matching the major version number.  Most users will use this tag. |
-| `felddy/weewx:5.3`   | The most recent image matching the major and minor version numbers.                     |
-| `felddy/weewx:5.3.0` | An exact image version.                                                                 |
+| `felddy/weewx:5.4`   | The most recent image matching the major and minor version numbers.                     |
+| `felddy/weewx:5.4.0` | An exact image version.                                                                 |
 
 See the [tags tab](https://hub.docker.com/r/felddy/weewx/tags) on Docker
 Hub for a list of all the supported tags.
@@ -187,7 +187,7 @@ Hub for a list of all the supported tags.
 
 | Mount point | Purpose                                                                                           |
 | ----------- | ------------------------------------------------------------------------------------------------- |
-| `/data`     | [WeeWX root](https://weewx.com/docs/5.3/usersguide/where/#location-of-weewx-components) directory |
+| `/data`     | [WeeWX root](https://weewx.com/docs/5.4/usersguide/where/#location-of-weewx-components) directory |
 
 ## Building from source ##
 
@@ -195,7 +195,7 @@ Build the image locally using this git repository as the [build context](https:/
 
 ```console
 docker build \
-  --tag felddy/weewx:5.3.0 \
+  --tag felddy/weewx:5.4.0 \
   https://github.com/felddy/weewx-docker.git#develop
 ```
 
@@ -219,7 +219,7 @@ Docker:
     docker buildx build \
       --platform linux/amd64 \
       --output type=docker \
-      --tag felddy/weewx:5.3.0 .
+      --tag felddy/weewx:5.4.0 .
     ```
 
 ## Contributing ##
