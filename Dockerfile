@@ -27,6 +27,7 @@ COPY src/version.txt ./src/version.txt
 # linux/ppc64le, and linux/s390x -- for which uv does not publish binaries.
 RUN pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir .
+RUN ln -s /opt/venv/lib/python${PYTHON_VERSION} /opt/venv/lib/python
 
 FROM python:${PYTHON_VERSION}-slim AS final-stage
 
