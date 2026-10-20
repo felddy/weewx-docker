@@ -6,6 +6,7 @@
 #
 # urllib3 2.7.0 (fixed upstream in 2.8.0)
 CVE-2026-97687
+CVE-2026-97689
 # msgpack 1.1.2 (fixed upstream in 1.2.1)
 GHSA-6v7p-g79w-8964
 # setuptools 70.3.0 (fixed upstream in 78.1.1)
