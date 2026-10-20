@@ -42,7 +42,9 @@ COPY src/version.txt ./src/version.txt
 # pip is used here (rather than uv) because the image is built for many
 # architectures -- including linux/arm/v6, linux/arm/v7, linux/riscv64,
 # linux/ppc64le, and linux/s390x -- for which uv does not publish binaries.
-RUN pip install --no-cache-dir --upgrade pip \
+# setuptools is upgraded alongside pip: it is both a runtime dependency and
+# part of the venv tooling, and the seeded copy lags security fixes.
+RUN pip install --no-cache-dir --upgrade pip setuptools \
   && pip install --no-cache-dir .
 
 FROM python:${PYTHON_VERSION}-slim AS final-stage
