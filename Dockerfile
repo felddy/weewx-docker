@@ -1,8 +1,25 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.14.6
+# The Debian suite the python:${PYTHON_VERSION}-slim image is built on;
+# archive-state below tracks its security archives.
+ARG DEBIAN_SUITE=trixie
 ARG WEEWX_UID=1000
 ARG WEEWX_HOME="/home/weewx"
+
+# This stage exists solely to track the state of the Debian archives that carry
+# security fixes.  BuildKit revalidates remote ADD sources on every build and
+# derives their cache key from the fetched content, so the final stage - and
+# everything downstream of it - is invalidated exactly when these archives are
+# republished.  Without this, the apt RUN in the final stage would be cached
+# indefinitely and would silently stop applying new security updates.
+#
+# The InRelease files are architecture independent (~45 KB each) and are only
+# bind-mounted, so nothing from this stage is committed to any image layer.
+FROM scratch AS archive-state
+ARG DEBIAN_SUITE
+ADD https://deb.debian.org/debian-security/dists/${DEBIAN_SUITE}-security/InRelease /security
+ADD https://deb.debian.org/debian/dists/${DEBIAN_SUITE}-updates/InRelease /updates
 
 FROM python:${PYTHON_VERSION} AS build-stage
 
@@ -25,7 +42,9 @@ COPY src/version.txt ./src/version.txt
 # pip is used here (rather than uv) because the image is built for many
 # architectures -- including linux/arm/v6, linux/arm/v7, linux/riscv64,
 # linux/ppc64le, and linux/s390x -- for which uv does not publish binaries.
-RUN pip install --no-cache-dir --upgrade pip \
+# setuptools is upgraded alongside pip: it is both a runtime dependency and
+# part of the venv tooling, and the seeded copy lags security fixes.
+RUN pip install --no-cache-dir --upgrade pip setuptools \
   && pip install --no-cache-dir .
 
 FROM python:${PYTHON_VERSION}-slim AS final-stage
@@ -47,10 +66,18 @@ LABEL org.opencontainers.image.vendor="Geekpad"
 RUN addgroup --system --gid ${WEEWX_UID} weewx \
   && adduser --system --uid ${WEEWX_UID} --ingroup weewx weewx
 
+# Apply Debian security updates: the upstream python image's Debian rootfs is
+# built from the main archive only, so fixes published to <suite>-security are
+# absent from it until a Debian point release folds them into main.
+#
 # libnss-wrapper lets the entrypoint synthesize passwd/group entries at runtime
 # so the container works under an arbitrary uid:gid (rootless / Kubernetes
 # runAsUser) without write access to /etc/passwd. See src/entrypoint.sh.
-RUN apt-get update && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6 libnss-wrapper
+RUN --mount=type=bind,from=archive-state,target=/run/archive-state \
+  apt-get update \
+  && apt-get upgrade -y --with-new-pkgs \
+  && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6 libnss-wrapper \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR ${WEEWX_HOME}
 
