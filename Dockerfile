@@ -46,6 +46,7 @@ COPY src/version.txt ./src/version.txt
 # part of the venv tooling, and the seeded copy lags security fixes.
 RUN pip install --no-cache-dir --upgrade pip setuptools \
   && pip install --no-cache-dir .
+RUN ln -s /opt/venv/lib/python${PYTHON_VERSION} /opt/venv/lib/python
 
 FROM python:${PYTHON_VERSION}-slim AS final-stage
 
