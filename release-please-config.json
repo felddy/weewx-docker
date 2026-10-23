@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
     ".": {
-      "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
         {
           "section": "Features",
@@ -60,6 +59,7 @@
         }
       ],
       "release-type": "simple",
+      "skip-changelog": true,
       "version-file": "src/version.txt",
       "versioning": "always-bump-patch"
     }
