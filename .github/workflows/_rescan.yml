@@ -29,4 +29,5 @@ jobs:
     uses: felddy/reusable-workflows/.github/workflows/container-rescan.yml@v5
     with:
       image-name: felddy/weewx
+      vex-file: .github/openvex.json
       tags: '["latest","edge"]'
