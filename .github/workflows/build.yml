@@ -91,6 +91,7 @@ jobs:
       platforms: ${{ needs.config.outputs.platforms }}
       test-platforms: ${{ needs.config.outputs.test-platforms }}
       scan-severity: CRITICAL,HIGH
+      vex-file: .github/openvex.json
       build-args: ${{ needs.config.outputs.build-args }}
       mirror-on-release: true
       publish-readme-on-release: true
