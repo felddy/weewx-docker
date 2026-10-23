@@ -36,20 +36,6 @@ updates:
           - "*"
 
   - directory: /
-    package-ecosystem: pip
-    schedule:
-      interval: "daily"
-    labels:
-      - "bot :robot:"
-      - "dependencies :game_die:"
-      - "python :snake:"
-    groups:
-      pip-all:
-        applies-to: "version-updates"
-        patterns:
-          - "*"
-
-  - directory: /
     package-ecosystem: uv
     schedule:
       interval: "daily"
