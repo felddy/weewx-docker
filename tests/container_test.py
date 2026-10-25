@@ -76,6 +76,20 @@ def test_locale_generation(locale_container):
     assert "Generated locale de_DE.UTF-8" in logs
 
 
+def test_version_independent_venv_path(main_container):
+    """Verify the stable venv library path resolves to site-packages."""
+    exit_code, output = main_container.exec_run(
+        [
+            "python",
+            "-c",
+            "import os, sys;"
+            " sys.exit(0 if os.path.isdir('/opt/venv/lib/python/site-packages')"
+            " else 1)",
+        ]
+    )
+    assert exit_code == 0, f"stable venv path did not resolve: {output}"
+
+
 def test_wait_for_ready(main_container):
     """Wait for container to be ready."""
     TIMEOUT = 30

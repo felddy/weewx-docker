@@ -47,6 +47,13 @@ COPY src/version.txt ./src/version.txt
 RUN pip install --no-cache-dir --upgrade pip setuptools \
   && pip install --no-cache-dir .
 
+# Stable, version-independent path to the venv's library directory so user
+# configuration that references skin or extension paths survives Python
+# upgrades. The target is derived from the interpreter because the
+# PYTHON_VERSION build argument carries the full x.y.z version while the
+# venv directory is named for the x.y feature release.
+RUN ln -s "$(python -c 'import sys; print("python%d.%d" % sys.version_info[:2])')" /opt/venv/lib/python
+
 FROM python:${PYTHON_VERSION}-slim AS final-stage
 
 ARG CONTAINER_VERSION
