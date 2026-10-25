@@ -16,6 +16,7 @@ MAIN_SERVICE_NAME = "weewx"
 REDACTION_REGEXES: List[re.Pattern] = []
 VERSION_FILE = "src/version.txt"
 VERSION_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-version"
+LOCALE_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-locale"
 GEN_TEST_CONFIG_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-gen-test-config"
 
 client = docker.from_env()
@@ -92,6 +93,19 @@ def version_container(image_tag):
         command="--version",
         detach=True,
         name=VERSION_SERVICE_NAME,
+    )
+    yield container
+    container.remove(force=True)
+
+
+@pytest.fixture(scope="session")
+def locale_container(image_tag):
+    """Fixture for a container that generates locales at startup."""
+    container = client.containers.run(
+        image_tag,
+        detach=True,
+        environment={"WEEWX_LOCALES": "de_DE.UTF-8", "LANG": "de_DE.UTF-8"},
+        name=LOCALE_SERVICE_NAME,
     )
     yield container
     container.remove(force=True)

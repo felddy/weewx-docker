@@ -89,6 +89,30 @@ mkdir data
 chown 1234:1234 data
 ```
 
+## Localization ##
+
+Skins and extensions that localize dates and text (for example the
+Belchertown skin) rely on system locales, which the slim base image does
+not include. Set `WEEWX_LOCALES` to a space- or comma-separated list of
+locales to generate, and `LANG` to the locale WeeWX should use:
+
+```yaml
+services:
+  weewx:
+    image: felddy/weewx:5
+    environment:
+      - WEEWX_LOCALES=de_DE.UTF-8
+      - LANG=de_DE.UTF-8
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+```
+
+The requested locales are compiled into `/data/locale` on first start and
+reused afterwards. Generation runs as the container user, so it works
+rootless and under an arbitrary `uid:gid`.
+
 ## Upgrading ##
 
 1. Stop the running container:

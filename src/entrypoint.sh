@@ -49,6 +49,37 @@ if ! touch "${permissions_test_file}" 2> /dev/null \
   exit 1
 fi
 
+# ── Runtime locale generation (rootless) ──────────────────────────────────────
+# Skins and extensions localize dates and text through system locales, which
+# the slim base image does not ship. Locales requested in WEEWX_LOCALES
+# (space- or comma-separated, e.g. "de_DE.UTF-8 fr_FR.UTF-8") are compiled on
+# first use into the data volume and activated via LOCPATH, which glibc
+# honors for non-setuid processes — no root is required and nothing outside
+# the data volume is written. Pair with LANG to select the active locale.
+if [ -n "${WEEWX_LOCALES:-}" ]; then
+  locale_dir="${WEEWX_ROOT}/locale"
+  mkdir -p "${locale_dir}"
+  for requested in ${WEEWX_LOCALES//,/ }; do
+    language="${requested%%.*}"
+    charmap="${requested#*.}"
+    if [ "${charmap}" = "${requested}" ]; then
+      charmap="UTF-8"
+    fi
+    compiled="${locale_dir}/${language}.${charmap}"
+    if [ ! -d "${compiled}" ]; then
+      # localedef exits non-zero on harmless warnings, so judge success by
+      # whether the compiled locale directory exists afterwards.
+      localedef -i "${language}" -f "${charmap}" "${compiled}" || true
+      if [ ! -d "${compiled}" ]; then
+        echo "WARNING: could not generate locale '${requested}'" >&2
+        continue
+      fi
+      echo "Generated locale ${language}.${charmap}"
+    fi
+  done
+  export LOCPATH="${locale_dir}"
+fi
+
 if [ ! -f "${CONF_FILE}" ]; then
   weectl station create --no-prompt ${WEEWX_ROOT}
   echo "A new set of configurations was created."
