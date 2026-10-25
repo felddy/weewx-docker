@@ -67,6 +67,15 @@ def test_log_version(version_container, project_version):
     ), "Container version output to log does not match project version file"
 
 
+def test_locale_generation(locale_container):
+    """Verify requested locales are compiled at startup without root."""
+    assert (
+        locale_container.wait()["StatusCode"] == 0
+    ), "The locale container did not exit cleanly"
+    logs = locale_container.logs().decode("utf-8")
+    assert "Generated locale de_DE.UTF-8" in logs
+
+
 def test_version_independent_venv_path(main_container):
     """Verify the stable venv library path resolves to site-packages."""
     exit_code, output = main_container.exec_run(

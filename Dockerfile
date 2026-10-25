@@ -83,7 +83,7 @@ RUN addgroup --system --gid ${WEEWX_UID} weewx \
 RUN --mount=type=bind,from=archive-state,target=/run/archive-state \
   apt-get update \
   && apt-get upgrade -y --with-new-pkgs \
-  && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6 libnss-wrapper \
+  && apt-get install -y git libusb-1.0-0 libtiff6 libopenjp2-7 libfreetype6 libnss-wrapper locales \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR ${WEEWX_HOME}
