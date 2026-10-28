@@ -5,7 +5,7 @@ name: Scorecards supply-chain security
 # felddy/reusable-workflows does the work. Pinned to an exact commit
 # for the Phase E pilot; moves to @v5 with the full stub conversion.
 
-on: # yamllint disable-line rule:truthy
+on:  # yamllint disable-line rule:truthy
   # Only the default branch is supported.
   branch_protection_rule:
   schedule:
