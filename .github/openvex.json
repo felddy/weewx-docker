@@ -2,6 +2,7 @@
   "@context": "https://openvex.dev/ns/v0.2.0",
   "@id": "https://github.com/felddy/weewx-docker/security/vex/pip-vendored-2026-10-23",
   "author": "Mark Feldhousen",
+  "last_updated": "2026-10-28T20:39:04Z",
   "statements": [
     {
       "impact_statement": "urllib3 2.7.0 exists only as pip's vendored copy (pip/_vendor and the ensurepip bundled wheel in the upstream python base image). It is exercised solely by pip's own operations, which never run in the deployed container. No pip release vendoring the fixed 2.8.0 exists (vendor.txt checked through pip 26.2.0); remove this statement once one ships.",
@@ -58,6 +59,24 @@
       }
     },
     {
+      "impact_statement": "msgpack 1.1.2 exists only as pip's vendored copy (pip/_vendor). It is exercised solely by pip's own cache operations, which never run in the deployed container. No pip release vendoring the fixed 1.2.3 exists (vendor.txt checked through pip 26.2.0); remove this statement once one ships.",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "products": [
+        {
+          "@id": "pkg:oci/weewx?repository_url=ghcr.io%2Ffelddy%2Fweewx",
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/msgpack@1.1.2"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "vulnerability": {
+        "name": "CVE-2026-114613"
+      }
+    },
+    {
       "impact_statement": "setuptools 70.3.0 exists only as pip's vendored copy (pip/_vendor and the ensurepip bundled wheel in the upstream python base image); the environment's real setuptools is current. The vendored copy is exercised solely by pip's own operations, which never run in the deployed container. No pip release vendoring the fixed 78.1.1 exists (vendor.txt checked through pip 26.2.0); remove this statement once one ships.",
       "justification": "vulnerable_code_not_in_execute_path",
       "products": [
@@ -77,5 +96,5 @@
     }
   ],
   "timestamp": "2026-10-23T14:32:42Z",
-  "version": 1
+  "version": 2
 }
