@@ -19,7 +19,7 @@ permissions: {}
 
 jobs:
   analysis:
-    uses: felddy/reusable-workflows/.github/workflows/scorecards.yml@362c80e3e1568e08a83b913ea7001129ea24b8d2
+    uses: felddy/reusable-workflows/.github/workflows/scorecards.yml@6fc144c8585adbd7c352196cd5ec5c5f90e914e7
     permissions:
       # Needed to upload the results to code-scanning dashboard.
       security-events: write
