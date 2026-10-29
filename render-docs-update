@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+# render-docs-update: regenerate README.md from README.md.j2.
+#
+# Renders the template using the CONTAINER_VERSION derived from
+# src/version.txt (the single source of truth) and writes README.md in
+# place.  Equivalent to 'make README.md'; also the default command the
+# reusable render-docs workflow runs.
+
+set -eu
+
+TEMPLATE="README.md.j2"
+VERSION_FILE="src/version.txt"
+OUTPUT="README.md"
+
+if [ ! -s "$VERSION_FILE" ]; then
+  echo "ERROR: ${VERSION_FILE} is missing or empty." >&2
+  exit 1
+fi
+
+# Derive CONTAINER_VERSION from the single source of truth (whitespace trimmed).
+CONTAINER_VERSION=$(tr -d '[:space:]' < "$VERSION_FILE")
+
+exec uv run --group dev python render_docs.py "$TEMPLATE" "$OUTPUT" "$CONTAINER_VERSION"
