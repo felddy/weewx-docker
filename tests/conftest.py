@@ -4,7 +4,6 @@
 import os
 from pathlib import Path
 import re
-from typing import List
 
 # Third-Party Libraries
 import docker
@@ -13,7 +12,7 @@ import pytest
 from .utils import RedactedPrinter
 
 MAIN_SERVICE_NAME = "weewx"
-REDACTION_REGEXES: List[re.Pattern] = []
+REDACTION_REGEXES: list[re.Pattern] = []
 VERSION_FILE = "src/version.txt"
 VERSION_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-version"
 LOCALE_SERVICE_NAME = f"{MAIN_SERVICE_NAME}-locale"

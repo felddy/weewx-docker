@@ -1,20 +1,15 @@
+# GENERATED FILE - DO NOT EDIT.
+# Merged from felddy/reusable-workflows lint-config/pre-commit-base.yaml
+# and this repository's .pre-commit-overlay.yaml by
+# tools/merge_precommit.py.
+# yamllint disable rule:line-length
 ---
-ci:
-  # Do not commit changes from running pre-commit for pull requests.
-  autofix_prs: false
-  # Autoupdate hooks weekly (this is the default).
-  autoupdate_schedule: weekly
-
 default_language_version:
-  # force all unspecified python hooks to run python3
   python: python3
-
 repos:
-  # Check the pre-commit configuration
   - repo: meta
     hooks:
       - id: check-useless-excludes
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -42,115 +37,96 @@ repos:
           - --autofix
       - id: requirements-txt-fixer
       - id: trailing-whitespace
-
-  # Text file hooks
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.46.0
+    rev: v0.48.0
     hooks:
       - id: markdownlint
         args:
           - --config=.mdl_config.yaml
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.6.2
+    rev: v3.8.1
     hooks:
       - id: prettier
-        # This is the latest version of v3 available from NPM. The pre-commit
-        # mirror does not pull tags for old major versions once a new major
-        # version tag is published.
         additional_dependencies:
           - prettier@3.3.1
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         args:
           - --strict
-
-  # GitHub Actions hooks
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.37.0
     hooks:
       - id: check-github-actions
       - id: check-github-workflows
-
-  # pre-commit hooks
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        args:
+          - -shellcheck=
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.31.1
+    hooks:
+      - id: zizmor
+        args:
+          - --min-severity=medium
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v4.5.0
+    rev: v4.5.1
     hooks:
       - id: validate_manifest
-
-  # Go hooks
   - repo: https://github.com/TekWizely/pre-commit-golang
     rev: v1.0.0-rc.4
     hooks:
-      # Go Build
       - id: go-build-repo-mod
-      # Style Checkers
       - id: go-critic
-      # goimports
       - id: go-imports-repo
         args:
-          # Write changes to files
           - -w
-      # Go Mod Tidy
       - id: go-mod-tidy-repo
-      # GoSec
       - id: go-sec-repo-mod
-      # StaticCheck
       - id: go-staticcheck-repo-mod
-      # Go Test
       - id: go-test-repo-mod
-      # Go Vet
       - id: go-vet-repo-mod
-  # Nix hooks
   - repo: https://github.com/nix-community/nixpkgs-fmt
     rev: v1.3.0
     hooks:
       - id: nixpkgs-fmt
-
-  # Shell script hooks
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
+    rev: v3.13.0-1
     hooks:
       - id: shfmt
         args:
-          # List files that will be formatted
           - --list
-          # Write result to file instead of stdout
           - --write
-          # Indent by two spaces
           - --indent
           - "2"
-          # Binary operators may start a line
           - --binary-next-line
-          # Switch cases are indented
           - --case-indent
-          # Redirect operators are followed by a space
           - --space-redirects
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-
-  # Python hooks
-  # Run bandit on the "tests" tree with a configuration
+        args:
+          - -x
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.2
+    rev: 1.9.4
     hooks:
       - id: bandit
         name: bandit (tests tree)
         files: tests
         args:
           - --config=.bandit.yml
-  # Run bandit on everything except the "tests" tree
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.2
+    rev: 1.9.4
     hooks:
       - id: bandit
         name: bandit (everything else)
         exclude: tests
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.11.0
+    rev: 26.3.1
     hooks:
       - id: black
   - repo: https://github.com/PyCQA/flake8
@@ -158,22 +134,26 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
+          - dlint==0.16.0
+          - flake8-bugbear==25.11.29
+          - flake8-comprehensions==3.17.0
           - flake8-docstrings==1.7.0
-          # This is necessary to read the flake8 configuration from
-          # the pyproject.toml file.
-          - flake8-pyproject==1.2.3
+          - flake8-noqa==1.5.0
+          - pep8-naming==0.15.1
   - repo: https://github.com/PyCQA/isort
-    rev: 7.0.0
+    rev: 8.0.1
     hooks:
       - id: isort
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+    rev: v1.19.1
     hooks:
       - id: mypy
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
       - id: pyupgrade
+        args:
+          - --py310-plus
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.3
     hooks:
@@ -186,31 +166,28 @@ repos:
         entry: uv audit --preview-features audit
         files: ^uv.lock$
         pass_filenames: false
-
-  # Render-consistency hooks
-  - repo: local
-    hooks:
       - id: render-docs-check
         name: render-docs-check
         language: system
         entry: ./render-docs-check
         files: ^(README\.md|README\.md\.j2|src/version\.txt)$
         pass_filenames: false
-
-  # Terraform hooks
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.104.0
+    rev: v1.105.0
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-
-  # Docker hooks
+      - id: terraform_providers_lock
+        args:
+          - --args=-platform=darwin_amd64
+          - --args=-platform=darwin_arm64
+          - --args=-platform=linux_amd64
+          - --args=-platform=linux_arm64
+          - --hook-config=--mode=always-regenerate-lockfile
   - repo: https://github.com/IamTheFij/docker-pre-commit
     rev: v3.0.1
     hooks:
       - id: docker-compose-check
-
-  # Packer hooks
   - repo: https://github.com/cisagov/pre-commit-packer
     rev: v0.3.1
     hooks:

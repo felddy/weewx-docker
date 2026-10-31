@@ -9,6 +9,8 @@ version: 2
 updates:
   - directory: /
     package-ecosystem: docker
+    cooldown:
+      default-days: 7
     schedule:
       interval: "daily"
     labels:
@@ -23,6 +25,8 @@ updates:
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    cooldown:
+      default-days: 7
     schedule:
       interval: "daily"
     labels:
@@ -37,6 +41,8 @@ updates:
 
   - directory: /
     package-ecosystem: uv
+    cooldown:
+      default-days: 7
     schedule:
       interval: "daily"
     labels:
