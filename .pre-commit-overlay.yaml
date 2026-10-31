@@ -1,0 +1,22 @@
+# Repo-specific layer over the central pre-commit base in
+# felddy/reusable-workflows lint-config/pre-commit-base.yaml. The
+# config-sync workflow (or tools/merge_precommit.py from a
+# reusable-workflows checkout) merges the pair into the generated
+# .pre-commit-config.yaml.
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    hooks:
+      # The base's exclude lists lockfiles this repository does not
+      # have, which trips check-useless-excludes.
+      - id: pretty-format-json
+        args:
+          - --autofix
+  - repo: local
+    hooks:
+      - id: render-docs-check
+        name: render-docs-check
+        language: system
+        entry: ./render-docs-check
+        files: ^(README\.md|README\.md\.j2|src/version\.txt)$
+        pass_filenames: false
