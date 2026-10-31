@@ -202,7 +202,7 @@ WeeWX](https://weewx.com/docs.html) that they support.
 | -------------------- | --------------------------------------------------------------------------------------- |
 | `felddy/weewx:5`     | The most recent image matching the major version number.  Most users will use this tag. |
 | `felddy/weewx:5.5`   | The most recent image matching the major and minor version numbers.                     |
-| `felddy/weewx:5.5.3` | An exact image version.                                                                 |
+| `felddy/weewx:5.5.4` | An exact image version.                                                                 |
 
 See the [tags tab](https://hub.docker.com/r/felddy/weewx/tags) on Docker
 Hub for a list of all the supported tags.
@@ -219,7 +219,7 @@ Build the image locally using this git repository as the [build context](https:/
 
 ```console
 docker build \
-  --tag felddy/weewx:5.5.3 \
+  --tag felddy/weewx:5.5.4 \
   https://github.com/felddy/weewx-docker.git#develop
 ```
 
@@ -243,7 +243,7 @@ Docker:
     docker buildx build \
       --platform linux/amd64 \
       --output type=docker \
-      --tag felddy/weewx:5.5.3 .
+      --tag felddy/weewx:5.5.4 .
     ```
 
 ## Contributing ##
