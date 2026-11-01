@@ -4,7 +4,7 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/felddy/weewx-docker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/felddy/weewx-docker)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6003/badge)](https://bestpractices.coreinfrastructure.org/projects/6003)
 [![CodeQL](https://github.com/felddy/weewx-docker/workflows/CodeQL/badge.svg)](https://github.com/felddy/weewx-docker/actions/workflows/codeql-analysis.yml)
-[![WeeWX Version](https://img.shields.io/github/v/release/felddy/weewx-docker?color=brightgreen)](https://hub.docker.com/r/felddy/weewx)
+[![Container Release](https://img.shields.io/github/v/release/felddy/weewx-docker?color=brightgreen&label=release)](https://hub.docker.com/r/felddy/weewx)
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
 [![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
@@ -189,8 +189,14 @@ docker compose run --rm --entrypoint pip weewx \
 ## Image tags ##
 
 The images of this container are tagged with [semantic
-versions](https://semver.org) that align with the [version and build of
-WeeWX](https://weewx.com/docs.html) that they support.
+versions](https://semver.org) whose major and minor numbers track the
+[WeeWX release line](https://weewx.com/docs.html) the image supports:
+an image tagged `5.5.x` ships a WeeWX `5.5` release. The patch number
+belongs to the container itself and advances with container fixes,
+dependency updates, and housekeeping between WeeWX releases, so it does
+not match WeeWX's patch number. The exact WeeWX version included in a
+release is pinned in that tag's
+[`pyproject.toml`](pyproject.toml).
 
 > [!TIP]
 > It is recommended that users use the major version tag: `:5` Using the major
