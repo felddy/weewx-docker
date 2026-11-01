@@ -163,6 +163,22 @@ At this point the pre-commit checks will run against any files that
 you attempt to commit.  If you want to run the checks against the
 entire repo, just execute `pre-commit run --all-files`.
 
+## Versioning and releases ##
+
+Container versions "support-sync" with WeeWX: the major and minor
+numbers track the WeeWX release line the image ships (`5.5.x` ships a
+WeeWX `5.5` release), while the patch number is the container's own
+counter and advances freely with container-only releases
+(release-please is configured with `always-bump-patch`).
+
+When adopting a new upstream WeeWX **minor or major** release, the
+commit that bumps the `weewx` pin in `pyproject.toml` must carry a
+`Release-As: X.Y.0` footer matching the new WeeWX major and minor, so
+the container jumps lines together with WeeWX. Upstream **patch**
+releases need no footer: adopt the pin and let the normal container
+patch release carry it. Never use `feat!`/`fix!` for upstream
+adoptions; majors and minors are reserved for WeeWX itself.
+
 ## License ##
 
 This project is released as open source under the [MIT license](LICENSE).
