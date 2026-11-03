@@ -3,12 +3,13 @@
 #
 # This driver is a merge of modified versions of both
 # the weewx-sdr driver and the weewx_meteostick driver.
-# This program also use a modified version of the rtldavis package.
+# The receiver is a Python port of the rtldavis package.
 # See: https://github.com/matthewwall/weewx-sdr
 #      https://github.com/matthewwall/weewx-meteostick
 #      https://github.com/bemasher/rtldavis
 #
 # Copyright 2019 Matthew Wall, Luc Heijst
+# Copyright (c) 2026 Manuel Hilgert <hilman2@gmail.com>
 # Thanks to kobuki for the calc_wind_speed_ec logic.
 #
 # Distributed under the terms of the GNU Public License (GPLv3)
@@ -22,44 +23,25 @@
 # FOR A PARTICULAR PURPOSE.
 #
 # See http://www.gnu.org/licenses/
-#
-# 27-04-2020 release note:
-# This version of rtldavis.py works best with version 0.13 of main.go or higher.
-# For EU frequencies the freqError values are stored in the database in
-# time slots of two days per transmitter (when activated).
 
-"""Receive Davis wireless observations from the companion rtldavis process.
+"""Receive Davis wireless observations with an RTL-SDR dongle.
 
+The receiver runs inside WeeWX: user.rtldavis_receiver follows the transmitters
+through their frequency hops and user.rtldavis_dsp demodulates the samples.
 See README.md for installation and docs/configuration.md for sensor mapping.
-Raw frames use the protocol documented by the original rtldavis project.
 """
-from __future__ import print_function  # Python 2/3 compatiblity
-from __future__ import with_statement
-
-import shlex
-from calendar import timegm
-import fnmatch
-import os
-import re
-import subprocess
 import math
-import string
-import threading
+import queue
 import time
-
-# Python 2/3 compatiblity
-try:
-    import Queue as queue   # python 2
-except ImportError:
-    import queue            # python 3
 
 import weewx.drivers
 import weewx.engine
 import weewx.units
 import weewx.wxformulas
-from weewx.crc16 import crc16
 from weewx.units import obs_group_dict
 from weeutil.weeutil import tobool
+
+import user.rtldavis_receiver
 
 # Use new-style weewx logging
 import weeutil.logger
@@ -76,7 +58,7 @@ def logerr(msg):
     log.error(msg)
 
 DRIVER_NAME = 'Rtldavis'
-DRIVER_VERSION = '0.21.2'
+DRIVER_VERSION = '0.22.2'
 
 weewx.units.obs_group_dict['frequency'] = 'group_frequency'
 weewx.units.USUnits['group_frequency'] = 'hertz'
@@ -85,22 +67,6 @@ weewx.units.MetricWXUnits['group_frequency'] = 'hertz'
 weewx.units.default_unit_format_dict['hertz'] = '%.0f'
 weewx.units.default_unit_label_dict['hertz'] = ' Hz'
 
-if weewx.__version__ < "3":
-    raise weewx.UnsupportedFeature("weewx 3 is required, found %s" %
-                                   weewx.__version__)
-
-# Rtldavis Usage
-#
-# For 868MHz the usually supplied 10cm DVB-T antenna stick is well suited. Make
-# sure that it is placed on a small metallic ground plane. Avoid near WLAN, DECT
-# or other RF stuff that may disturb the SDR stick.
-#
-# To reduce other disturbances, place a sensor in about 2m distance for the first
-# test.
-#
-# Call with:  /home/pi/work/bin/rtldavis -tf [transceiver-frequency: US, NZ or EU] -tr [transmitters]}
-#
-DEFAULT_CMD = 'rtldavis'
 DEBUG_RAIN = 0
 DEBUG_PARSE = 0
 DEBUG_RTLD = 0
@@ -114,10 +80,6 @@ def confeditor_loader():
 
 def dbg_parse(verbosity, msg):
     if DEBUG_PARSE >= verbosity:
-        logdbg(msg)
-
-def dbg_rtld(verbosity, msg):
-    if DEBUG_RTLD >= verbosity:
         logdbg(msg)
 
 def _fmt(data):
@@ -367,322 +329,47 @@ def interpolate(rx0, rx1,
 
     return y + dy0 + (x - rx0) / float(rx1 - rx0) * (dy1 - dy0)
 
-class AsyncReader(threading.Thread):
-    """Read a binary pipe until EOF without blocking the WeeWX packet loop.
-
-    Args:
-        fd (typing.BinaryIO): Pipe owned by ProcManager.
-        queue (queue.Queue): Destination for complete binary lines.
-        label (str): Thread name for diagnostics.
-    """
-
-    def __init__(self, fd, queue, label):
-        threading.Thread.__init__(self, name=label, daemon=True)
-        self._fd = fd
-        self._queue = queue
-        self._running = True
-
-    def run(self):
-        for line in iter(self._fd.readline, b''):
-            if not self._running:
-                break
-            self._queue.put(line)
-
-    def stop_running(self):
-        self._running = False
-
-
-class ProcManager:
-    """Own one receiver process and drain both pipes independently."""
-
-    def __init__(self):
-        self._process = None
-        self.stderr_queue = queue.Queue()
-        self.stdout_queue = queue.Queue()
-        self.stderr_reader = None
-        self.stdout_reader = None
-
-    def startup(self, cmd, path=None, ld_library_path=None):
-        """Start the receiver without invoking a shell.
-
-        Args:
-            cmd (str): Executable and arguments, with shell-style quoting.
-            path (str|None): Optional directories to prepend to PATH.
-            ld_library_path (str|None): Optional shared-library search path.
-        """
-        env = os.environ.copy()
-        if path:
-            env['PATH'] = path + os.pathsep + env.get('PATH', '')
-        if ld_library_path:
-            env['LD_LIBRARY_PATH'] = ld_library_path
-        try:
-            self._process = subprocess.Popen(shlex.split(cmd), env=env,
-                                             stderr=subprocess.PIPE,
-                                             stdout=subprocess.PIPE)
-            self.stderr_reader = AsyncReader(
-                self._process.stderr, self.stderr_queue, 'rtldavis-stderr')
-            self.stdout_reader = AsyncReader(
-                self._process.stdout, self.stdout_queue, 'rtldavis-stdout')
-            self.stderr_reader.start()
-            self.stdout_reader.start()
-        except (OSError, ValueError) as e:
-            self.shutdown()
-            raise weewx.WeeWxIOError("failed to start receiver: %s" % e)
-
-    def shutdown(self):
-        """Stop and reap only this station's receiver. Safe to call twice."""
-        if self._process is None:
-            return
-        if self.running():
-            self._process.terminate()
-            try:
-                self._process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                self._process.kill()
-        self._process.wait()
-        for reader in (self.stderr_reader, self.stdout_reader):
-            if reader is not None:
-                reader.join(timeout=3)
-                reader.stop_running()
-        for pipe in (self._process.stderr, self._process.stdout):
-            pipe.close()
-
-    def running(self):
-        return self._process is not None and self._process.poll() is None
-
-    def pending(self):
-        """Return whether stderr can still deliver output after process exit."""
-        return (self.running() or not self.stderr_queue.empty()
-                or not self.stdout_queue.empty()
-                or any(reader is not None and reader.is_alive()
-                       for reader in (self.stderr_reader, self.stdout_reader)))
-
-    def get_stdout(self):
-        lines = []
-        while True:
-            try:
-                lines.append(self.stdout_queue.get_nowait().decode('utf-8', errors='replace'))
-            except queue.Empty:
-                return lines
-
-    def get_stderr(self):
-        """Yield at most one second of output, including an empty idle batch.
-
-        Yields:
-            list[str]: Receiver lines. Empty batches let the caller check its watchdog.
-        """
-        deadline = time.monotonic() + 1
-        while self.pending() and time.monotonic() < deadline:
-            try:
-                line = self.stderr_queue.get(timeout=.1)
-                yield [line.decode('utf-8', errors='replace')]
-            except queue.Empty:
-                yield []
-
-
-class Packet:
-    """Interface shared by data and frequency diagnostic parsers."""
-
-    IDENTIFIER = re.compile(r"(?!)")
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def parse_text(ts, payload, lines):
-        return None
-
-
-class DATAPacket(Packet):
-    IDENTIFIER = re.compile(r"^\d{2}:\d{2}:\d{2}\.\d{6} [0-9A-F]{16} ")
-    PATTERN = re.compile(r"^(\d{2}):(\d{2}):(\d{2}\.\d{6}) ([0-9A-F]{16}) (\d+) (\d+) (\d+) (\d+)")
-
-    @staticmethod
-    def parse_text(driver, payload, lines):
-        """Decode a CRC-valid frame, rejecting repeated RF decodes per sender.
-
-        Args:
-            driver (RtldavisDriver): Driver with transmitter and timing state.
-            payload (str): Receiver line without surrounding whitespace.
-            lines (list[str]): Pending lines; consumes its first entry.
-
-        Returns:
-            dict|None: Decoded observations, or None for an invalid or repeated frame.
-        """
-        lines.pop(0)
-        match = DATAPacket.PATTERN.match(payload)
-        if not match:
-            return None
-        raw_pkt = bytes.fromhex(match.group(4))
-        if crc16(raw_pkt):
-            logdbg("discarding frame with invalid CRC: %s" % payload)
-            return None
-        stamp = int(match.group(1)) * 3600 + int(match.group(2)) * 60 + float(match.group(3))
-        channel = (raw_pkt[0] & 7) + 1
-        previous = driver._last_frame_time.get(channel)
-        # The receiver stamps frames before pipe buffering. Host receipt times
-        # would discard valid frames when a buffered batch reaches WeeWX.
-        # An ISS needs at least 2.5625 s between transmissions. The 2 s guard
-        # rejects secondary decodes of the same RF burst, even with a valid CRC.
-        if previous is not None and (stamp - previous) % 86400 < 2:
-            logdbg("discarding repeated RF burst from channel %d" % channel)
-            return None
-        data = driver.parse_readings(raw_pkt)
-        if not data:
-            return None
-        driver._last_frame_time[channel] = stamp
-        for i in range(4):
-            data['curr_cnt%d' % i] = int(match.group(i + 5))
-        return data
-
-
-class CHANNELPacket(Packet):
-    IDENTIFIER = re.compile("ChannelIdx:")
-    # chan: 13:44:13.116046 Hop: {ChannelIdx:3 ChannelFreq:868437250 FreqError:431 Transmitter:1}
-    PATTERNv13 = re.compile(r'ChannelIdx:([\d]+) ChannelFreq:([\d]+) FreqError:([\d-]+) Transmitter:([\d]+)')
-    PATTERNv12 = re.compile(r'ChannelIdx:([\d]+) ChannelFreq:([\d]+) FreqError:([\d-]+)')
-
-    @staticmethod
-    def parse_text(self, payload, lines):
-        pkt = dict()
-        # check for channelpacket of rtldavis version 13 and higher
-        m = CHANNELPacket.PATTERNv13.search(lines[0])
-        if m:
-            dbg_rtld(2, "chan: %s" % lines[0])
-
-            if abs(int(m.group(3))) > 20000:
-                raise weewx.WeeWxIOError("RESTART RTLDAVIS PROGRAM: abs freqOffset channel %s too big (> 20000): %s" % (m.group(1), m.group(3)))
-            # save frequency errors only for EU band
-            if self.frequency == 'EU':
-                # Store the FreqErrors only for one transmitter
-                # The data for each transmitter is stored during 2 full days
-                if int(m.group(4)) == self.transm_to_store:
-                    pkt['dateTime'] = int(time.time() + 0.5)
-                    pkt['usUnits'] = weewx.METRICWX
-                    for y in range(0, 5):
-                        if int(m.group(1)) == y:
-                            pkt['freqError%d' % y] = int(m.group(3))
-                            dbg_rtld(3, "Store freqError%d: %s for transmitter: %s" % (y, int(m.group(3)), int(m.group(4))))
-                    dbg_rtld(3, "chan_pkt: %s" % pkt)
-                else:
-                    dbg_rtld(3, "Don't store freqErr: %s for transm: %s" % (int(m.group(3)), int(m.group(4))))
-            else:
-                dbg_rtld(3, "Don't store freqErrors for frequency band %s" % self.frequency)
-            lines.pop(0)
-            return pkt
-        else:
-            # check for channelpacket of rtldavis version 12 and lower
-            m = CHANNELPacket.PATTERNv12.search(lines[0])
-            if m:
-                dbg_rtld(2, "chan: %s" % lines[0])
-
-                if abs(int(m.group(3))) > 20000:
-                    raise weewx.WeeWxIOError("RESTART RTLDAVIS PROGRAM: abs freqOffset channel %s too big (> 20000): %s" % (m.group(1), m.group(3)))
-                # save frequency errors only for EU band
-                if self.frequency == 'EU':
-                    pkt['dateTime'] = int(time.time() + 0.5)
-                    pkt['usUnits'] = weewx.METRICWX
-                    for y in range(0, 5):
-                        if int(m.group(1)) == y:
-                            pkt['freqError%d' % y] = int(m.group(3))
-                    dbg_rtld(3, "chan_pkt: %s" % pkt)
-                else:
-                    dbg_rtld(3, "Don't store freqErrors for frequency band %s" % self.frequency)
-                lines.pop(0)
-                return pkt
-            else:
-                dbg_rtld(1, "CHANNELPacket: unrecognized data: '%s'" % lines[0])
-                lines.pop(0)
-
-
-class PacketFactory(object):
-
-    # FIXME: do this with class introspection
-    KNOWN_PACKETS = [
-        DATAPacket,
-        CHANNELPacket
-    ]
-
-    @staticmethod
-    def _check_crc(msg):
-        if crc16(msg) != 0:
-            raise ValueError("CRC error")
-
-    @staticmethod
-    def create(self, lines):
-        # return a list of packets from the specified lines
-        while lines:
-            pkt = PacketFactory.parse_text(self, lines)
-            if pkt is not None:
-                yield pkt
-
-    @staticmethod
-    def parse_text(self, lines):
-        pkt = dict()
-        payload = lines[0].strip()
-        if payload:
-            for parser in PacketFactory.KNOWN_PACKETS:
-                m = parser.IDENTIFIER.search(payload)
-                if m:
-                    pkt = parser.parse_text(self, payload, lines)
-                    return pkt
-            dbg_rtld(1, "info: %s" % payload)
-        else:
-            dbg_rtld(2, "blank line")
-        lines.pop(0)
-        return None
-
-
-
 class RtldavisConfigurationEditor(weewx.drivers.AbstractConfEditor):
     @property
     def default_stanza(self):
         return """
 [Rtldavis]
-    # This section is for the rtldavis sdr-rtl USB receiver.
+    # This section is for Davis wireless stations received with an RTL-SDR dongle.
 
-    cmd = /usr/local/bin/rtldavis
-    # Options:
-    # -ppm = frequency correction of rtl dongle in ppm; default = 0
-    # -gain = tuner gain in tenths of Db; default = 0 means "auto gain"
-    # -ex = extra loopTime in ms; default = 0
-    # -fc = frequency correction for all channels; default = 0
-    # -u  = log undefined signals
-    #
-    # The options below are set from the channel configuration
-    # -tf = transmitter frequencies, US, NZ or EU
-    # -tr = transmitters: tr1=1,  tr2=2,  tr3=4,  tr4=8,
-    #                     tr5=16, tr6=32, tr7=64, tr8=128
-
-    # Radio frequency to use between USB transceiver and console: US, NZ or EU
-    # US uses 915 MHz, NZ uses 921 MHz and EU uses 868.3 MHz.  Default is EU.
+    # Frequency band of the station: EU (868 MHz), US (915 MHz) or NZ (921 MHz).
     transceiver_frequency = EU
 
-    # Used channels: 0=not present, 1-8)
-    # The channel of the Vantage Vue ISS or Vantage Pro or Pro2 ISS
+    # Transmitter channels as set on the transmitter and shown by the console,
+    # 1-8. 0 means not present. Only the ISS is required.
     iss_channel = 1
-    # The values below only apply for Vantage Pro or Pro2
     anemometer_channel = 0
-    leaf_soil_channel  = 0
+    leaf_soil_channel = 0
     temp_hum_1_channel = 0
     temp_hum_2_channel = 0
-    # rain bucket type (0: 0.01 inch, 1: 0.2 mm)
-    rain_bucket_type = 1
-
-    # Print debug messages
-    # 0=no logging; 1=minimum logging; 2=normal logging; 3=detailed logging
-    debug_parse = 0
-    debug_rain  = 0
-    debug_rtld  = 2     # rtldavis logging: 1=inf; 2=(1)+data+chan; 3=(2)+pkt
-
-    # The pct_good per transmitter can be saved to the database
-    # This has only effect with 2 transmitters or more
-    save_pct_good_per_transmitter = False
 
     # The driver to use:
     driver = user.rtldavis
-
 """
+
+    def prompt_for_settings(self):
+        """Ask for the settings that differ between stations.
+
+        Returns:
+            dict: Values for transceiver_frequency, iss_channel and rain_bucket_type.
+        """
+        settings = dict()
+        print("Specify the frequency band of the station: EU for 868 MHz,")
+        print("US for 915 MHz in North America, NZ for 921 MHz in New Zealand.")
+        settings['transceiver_frequency'] = self._prompt(
+            'transceiver_frequency', 'EU', ['EU', 'US', 'NZ'])
+        print("Specify the channel of the ISS, 1 to 8. The console shows it, and")
+        print("it is set with the DIP switches in the transmitter.")
+        settings['iss_channel'] = self._prompt(
+            'iss_channel', '1', [str(channel) for channel in range(1, 9)])
+        print("Specify the rain bucket: 0 for 0.01 inch, 1 for 0.2 mm per tip.")
+        bucket = '0' if settings['transceiver_frequency'] == 'US' else '1'
+        settings['rain_bucket_type'] = self._prompt('rain_bucket_type', bucket, ['0', '1'])
+        return settings
 
 class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
     """Decode selected transmitters and add reception summaries to archive events."""
@@ -718,7 +405,7 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
         'soilMoist4': 'soil_moisture_4',
         'leafWet1': 'leaf_wetness_1',
         'leafWet2': 'leaf_wetness_2',
-        'rxCheckPercent': 'pct_good_all', # updated in
+        'rxCheckPercent': 'pct_good_all', # updated in 
         'txBatteryStatus': 'bat_iss',
         'supplyVoltage': 'supercap_volt',
         'referenceVoltage': 'solar_power',
@@ -738,7 +425,10 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
 
 
     def __init__(self, engine, config_dict):
-        """Load the station mapping and start its receiver process.
+        """Load the station mapping and start the receiver thread.
+
+        The receiver waits for a missing dongle or library and logs how to fix
+        it, so WeeWX keeps running and picks up the dongle when it appears.
 
         Args:
             engine (weewx.engine.StdEngine|None): WeeWX engine, or None for diagnostics.
@@ -758,6 +448,8 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
         DEBUG_RAIN = int(stn_dict.get('debug_rain', DEBUG_RAIN))
         global DEBUG_RTLD
         DEBUG_RTLD = int(stn_dict.get('debug_rtld', DEBUG_RTLD))
+        logging.getLogger('user.rtldavis_receiver').setLevel(
+            logging.DEBUG if DEBUG_RTLD else logging.INFO)
 
         # modification by Luc Heijst
         self.last_hum = None
@@ -776,14 +468,14 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
         self.stats = self._init_stats()
         self.last_rain_count = None
         self._rain_candidate = None
-        self._last_frame_time = {}
         self._log_humidity_raw = tobool(stn_dict.get('log_humidity_raw', False))
         self._save_pct_good_per_transmitter = tobool(stn_dict.get('save_pct_good_per_transmitter', False))
         self._sensor_map = stn_dict.get('sensor_map', {})
         loginf('sensor map is %s' % self._sensor_map)
-        self.cmd = stn_dict.get('cmd', DEFAULT_CMD)
-        self.path = stn_dict.get('path', None)
-        self.ld_library_path = stn_dict.get('ld_library_path', None)
+        self.device = str(stn_dict.get('device', '0'))
+        gain = str(stn_dict.get('gain', 'auto'))
+        self.gain = None if gain.lower() == 'auto' else float(gain)
+        self.ppm = float(stn_dict.get('ppm', 0))
 
         freq = stn_dict.get('transceiver_frequency', self.DEFAULT_FREQUENCY)
         if freq not in ['US', 'NZ', 'EU']:
@@ -807,17 +499,18 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
         loginf('using temp_hum_1_channel %s' % channels['temp_hum_1'])
         loginf('using temp_hum_2_channel %s' % channels['temp_hum_2'])
 
-        self.transmitters, self.tr_count = RtldavisDriver.ch_to_xmit(self,
+        self.transmitters, self.tr_count = RtldavisDriver.ch_to_xmit(self, 
             channels['iss'], channels['anemometer'], channels['leaf_soil'],
             channels['temp_hum_1'], channels['temp_hum_2'])
         loginf('using transmitters %d' % self.transmitters)
         loginf('log_humidity_raw %s' % self._log_humidity_raw)
 
-        self.cmd = self.cmd + " -tf " + str(self.frequency) + " -tr " + str(self.transmitters)
-
-        self._last_pkt = None # avoid duplicate sequential packets
-        self._mgr = ProcManager()
-        self._mgr.startup(self.cmd, self.path, self.ld_library_path)
+        receiver = user.rtldavis_receiver.Receiver(
+            self.frequency, [i for i in range(8) if self.transmitters & (1 << i)], self.ppm)
+        self._radio = user.rtldavis_receiver.Radio(receiver, self.device, self.gain)
+        # Set per loop by genLoopPackets; see there.
+        self.transm_to_store = None
+        self._radio.start()
 
         # bind to new archive record events so that we can update the rf
         # stats on each archive record.
@@ -895,12 +588,12 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
             'loop_times': [2.5625, 2.625, 2.6875, 2.75, 2.8125, 2.875, 2.9375, 3, 100.0],
             'activeTrIds': [9] * 8,    # 9 means: sensor not active
             'activeTrIdPtrs': [0] * 8, # pointer to active transmitter
-            'curr_ts': 0,              # time stamp of current archive
+            'curr_ts': 0,              # time stamp of current archive  
             'last_ts': 0,              # time stamp of previous archive
             'curr_cnt': [0] * 4,       # received messages since startup at current archive
             'last_cnt': [0] * 4,       # received messages since startup at previous archive
             'max_count': [0] * 4,      # max to receive messages per transmitter current archive period
-            'count': [0] * 4,          # received messages per transmitter current archive period
+            'count': [0] * 4,          # received messages per transmitter current archive period 
             'missed': [0] * 4,         # missed messages per transmitter current archive period
             'pct_good': [None] * 4,    # percentage of good messages per transmitter
             'pct_good_all': None}      # percentage of good messages for all transmitters
@@ -975,54 +668,62 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
         self._reset_stats()  # save current stats in last stats
 
     def closePort(self):
-        self._mgr.shutdown()
+        self._radio.stop()
 
     @property
     def hardware_name(self):
         return self._hardware_name
 
     def genLoopPackets(self):
-        """Yield observations until receiver exit or a 150-second data timeout.
+        """Yield observations as frames arrive. Without reception, wait.
+
+        The receiver searches for the transmitters by itself and logs what it
+        does, so a silent period is not an error. Only a receiver defect ends
+        the loop.
 
         Yields:
             dict: WeeWX LOOP packets with METRICWX units.
         """
-        packet = dict()
-        time_last_received = int(time.time())
-        # change the presentation of the FrequencyErrors of the transmitters
-        #  each period
-        periodShowOneTransm = 2*24*3600  # 2 days
-        rel_transm_to_store = int(((time_last_received-(3*3600)) % (periodShowOneTransm * self.tr_count)) / periodShowOneTransm)
-        self.transm_to_store = self.stats['activeTrIds'][rel_transm_to_store]
-        dbg_parse(1, "Number of transmitters: %s, store freqError data for transmitter with ID=%s" % (self.tr_count, self.transm_to_store))
+        # Frequency offsets fill five database fields, one per EU channel. With
+        # several transmitters, each transmitter's offsets are stored for two
+        # days in turn.
+        period = 2 * 24 * 3600
+        relative = int(((time.time() - 3 * 3600) % (period * self.tr_count)) / period)
+        self.transm_to_store = self.stats['activeTrIds'][relative]
+        dbg_parse(1, "Number of transmitters: %s, store freqError data for transmitter with ID=%s"
+                  % (self.tr_count, self.transm_to_store))
+        while True:
+            if self._radio.failure is not None:
+                raise weewx.WeeWxIOError("receiver failed: %s" % self._radio.failure)
+            try:
+                frame = self._radio.frames.get(timeout=1)
+            except queue.Empty:
+                continue
+            packet = self._frame_to_packet(frame)
+            if packet:
+                dbg_parse(3, "pkt= %s" % packet)
+                yield packet
 
-        while self._mgr.pending():
-            # the stalled timeout must be greater than the init period
-            # init period is EU: 16 s, US, AU and NZ: 133 s
-            if int(time.time()) - time_last_received > 150:
-                raise weewx.WeeWxIOError("rtldavis process stalled")
-            for line in self._mgr.get_stdout():
-                logdbg("receiver stdout: %s" % line.rstrip())
-            # program main.go writes its data to stderr
-            for lines in self._mgr.get_stderr():
-                for data in PacketFactory.create(self, lines):
-                    if data:
-                        if 'curr_cnt0' in data:
-                            time_last_received = int(time.time())
-                            self._update_stats(data['curr_cnt0'], data['curr_cnt1'], data['curr_cnt2'], data['curr_cnt3'])
-                        if data != self._last_pkt:
-                            self._last_pkt = data
-                            packet = self._data_to_packet(data)
-                            if packet is not None:
-                                dbg_parse(3, "pkt= %s" % packet)
-                                yield packet
-                        else:
-                            if packet:
-                                dbg_parse(3, "ignoring duplicate packet %s" % packet)
-                    elif lines:
-                        loginf("missed (unparsed): %s" % lines)
-        else:
-            raise weewx.WeeWxIOError("rtldavis process is not running")
+    def _frame_to_packet(self, frame):
+        """Convert one received frame to a LOOP packet.
+
+        Args:
+            frame (user.rtldavis_receiver.Frame): Frame from a configured transmitter.
+
+        Returns:
+            dict|None: The observations and, for EU stations, the transmitter's
+            frequency offset on the frame's channel. None for a frame without
+            observations.
+        """
+        counts = list(frame.counts[:4]) + [0] * (4 - len(frame.counts[:4]))
+        self._update_stats(*counts)
+        data = self.parse_readings(frame.payload)
+        if not data:
+            return None
+        if self.frequency == 'EU' and frame.transmitter == self.transm_to_store:
+            # Mapped like the observations, to the legacy fields by default.
+            data['freqError%d' % frame.channel] = int(round(frame.frequency_offset))
+        return self._data_to_packet(data)
 
     def parse_readings(self, pkt):
         """Decode one eight-byte payload, without its receiver timestamp or CRC check.
@@ -1058,6 +759,14 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
             else:
                 data['bat_th_2'] = battery_low
             message_type = pkt[0] >> 4
+            # Every type these transmitters send has a branch below, including
+            # the undecoded 3 and 0xC. A CRC-valid frame with any other type is
+            # corrupt in several bits, so none of its values, not even the
+            # battery flag, can be trusted.
+            if message_type in (0, 1, 0xB, 0xD, 0xF):
+                logdbg("discarding frame with message type 0x%x, which no transmitter "
+                       "sends: %s" % (message_type, pkt.hex()))
+                return {}
             if (data['channel'] == self.channels['wind_channel']
                     and message_type in (2, 4, 5, 6, 7, 8, 9, 0xA, 0xE)):
                 wind_speed_raw, wind_dir_raw = pkt[1], pkt[2]
@@ -1269,9 +978,6 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
                     data['rain_count'] = rain_count
                     dbg_parse(2, "rain_count_raw=0x%02x value=%s" %
                               (rain_count_raw, rain_count))
-            else:
-                # unknown message type
-                logerr("unknown message type 0x%01x" % message_type)
 
         elif data['channel'] == self.channels['leaf_soil']:
             # leaf and soil station
@@ -1348,64 +1054,59 @@ class RtldavisDriver(weewx.drivers.AbstractDevice, weewx.engine.StdService):
         obs_group_dict['heatingVoltage']    = 'group_frequency'
 
 
-############################## Conf Editor ##############################
-
 if __name__ == '__main__':
-    import optparse
+    import argparse
+    import sys
 
-    import weewx
-    import weeutil.logger
-
-    weewx.debug = 0
-
-    weeutil.logger.setup('rtldavis', {})
-
-    usage = """%prog [--debug] [--help] [--version]
-        [--action=(show-packets] [--cmd=RTL_CMD]
-        [--path=PATH] [--ld_library_path=LD_LIBRARY_PATH]
-
-Actions:
-  show-packets: display each packet (default)
-
-"""
-
-    parser = optparse.OptionParser(usage=usage)
-    parser.add_option('--version', dest='version', action='store_true',
-                      help='display driver version')
-    parser.add_option('--debug', dest='debug', action='store_true',
-                      help='display diagnostic information while running')
-    parser.add_option('--cmd', dest='cmd', default=DEFAULT_CMD,
-                      help='rtldavis command with options')
-    parser.add_option('--path', dest='path',
-                      help='value for PATH')
-    parser.add_option('--ld_library_path', dest='ld_library_path',
-                      help='value for LD_LIBRARY_PATH')
-    parser.add_option('--action', dest='action', default='show-packets',
-                      help='actions include show-packets')
-
-    (options, args) = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        prog='python3 -m user.rtldavis',
+        description="Check the receiver setup, or receive Davis transmitters "
+                    "without WeeWX. Stop WeeWX first; only one program can use the dongle.")
+    parser.add_argument('--version', action='store_true', help="show the driver version")
+    parser.add_argument('--check', action='store_true',
+                        help="check numpy, librtlsdr and the dongle, then exit")
+    parser.add_argument('--band', default='EU', choices=['EU', 'US', 'NZ'],
+                        help="frequency band; default EU")
+    parser.add_argument('--channels', default='1',
+                        help="transmitter channels, comma-separated; default 1")
+    parser.add_argument('--device', default='0', help="dongle index or serial number")
+    parser.add_argument('--gain', default='auto', help="tuner gain in dB; default auto")
+    parser.add_argument('--ppm', type=float, default=0,
+                        help="expected frequency error of the dongle; default 0")
+    parser.add_argument('--iq', metavar='FILE',
+                        help="decode an unsigned 8-bit IQ recording instead of a dongle")
+    parser.add_argument('--debug', action='store_true', help="show every hop and frame")
+    options = parser.parse_args()
 
     if options.version:
         print("rtldavis driver version %s" % DRIVER_VERSION)
-        exit(0)
+        sys.exit(0)
+    logging.basicConfig(level=logging.DEBUG if options.debug else logging.INFO,
+                        format='%(asctime)s %(message)s')
+    if options.check:
+        sys.exit(0 if user.rtldavis_receiver.check(options.device) else 1)
+    if options.iq:
+        for candidate in user.rtldavis_receiver.replay(options.iq):
+            print("%s channel %d" % (candidate.payload.hex().upper(),
+                                     (candidate.payload[0] & 7) + 1))
+        sys.exit(0)
 
-    if options.debug:
-        weewx.debug = 1
-
-    if options.action != 'show-packets':
-        parser.error("unknown action %s" % options.action)
-    mgr = ProcManager()
+    transmitters = [int(channel) - 1 for channel in options.channels.split(',')]
+    receiver = user.rtldavis_receiver.Receiver(options.band, transmitters, options.ppm)
+    radio = user.rtldavis_receiver.Radio(
+        receiver, options.device, None if options.gain == 'auto' else float(options.gain))
+    radio.start()
     try:
-        mgr.startup(options.cmd, path=options.path,
-                    ld_library_path=options.ld_library_path)
-        while mgr.pending():
-            for lines in mgr.get_stderr():
-                for line in lines:
-                    print(line.rstrip(), flush=True)
-            for line in mgr.get_stdout():
-                print(line.rstrip(), flush=True)
+        while radio.failure is None:
+            try:
+                frame = radio.frames.get(timeout=1)
+            except queue.Empty:
+                continue
+            print("%s channel %d, %+.1f kHz, received %s"
+                  % (frame.payload.hex().upper(), frame.transmitter + 1,
+                     frame.frequency_offset / 1000, list(frame.counts)), flush=True)
     except KeyboardInterrupt:
         pass
     finally:
-        mgr.shutdown()
-    exit(mgr._process.returncode if mgr._process else 1)
+        radio.stop()
+    sys.exit(1 if radio.failure else 0)
