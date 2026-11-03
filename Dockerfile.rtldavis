@@ -1,34 +1,11 @@
 ARG WEEWX_BASE_IMAGE=ghcr.io/cdavis289/weewx:5.5.2
-FROM golang:1.26.10-bookworm AS rtldavis_builder
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      build-essential \
-      ca-certificates \
-      cmake \
-      git \
-      librtlsdr-dev \
-      pkg-config \
- && rm -rf /var/lib/apt/lists/*
-
-ENV GO111MODULE=on
-ENV GOPATH=/go
-
-ARG RTL_DAVIS_REPO=https://github.com/weewx-packages/weewx-rtldavis.git
-ARG RTL_DAVIS_REF=v0.21.2
-
-WORKDIR /build
-
-RUN git clone --depth 1 --branch "$RTL_DAVIS_REF" "$RTL_DAVIS_REPO" /build/weewx-rtldavis
-
-WORKDIR /build/weewx-rtldavis/receiver
-
-RUN go mod download \
- && go build -o /usr/local/bin/rtldavis .
-
 FROM ${WEEWX_BASE_IMAGE}
 
 USER root
+
+# Python-only RTL-Davis continuation (no Go receiver process).
+ARG RTL_DAVIS_REF=v0.22.2
+RUN /opt/venv/bin/python -m pip install --no-cache-dir 'numpy>=2,<3'
 
 # Refresh the Debian package index even when BuildKit has cached an earlier
 # installation layer. Increment this value when a new CA bundle is required.
@@ -45,15 +22,12 @@ RUN echo "APT cache refresh: ${APT_CACHE_BUST}" \
  && dpkg-query -W -f='${Package} ${Version}\n' ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY --from=rtldavis_builder /usr/local/bin/rtldavis /usr/local/bin/rtldavis
-
-RUN chmod 755 /usr/local/bin/rtldavis \
- && ldd /usr/local/bin/rtldavis \
- && command -v rtl_test \
- && command -v rtl_fm
+RUN command -v rtl_test \
+ && command -v rtl_fm \
+ && /opt/venv/bin/python -c 'import numpy; print(numpy.__version__)'
 
 # Vendor the tested continuation driver with the hardware_name patch.
-COPY test-assets/rtldavis/rtldavis.py /opt/weewx-extensions/weewx-rtldavis/rtldavis.py
+COPY test-assets/rtldavis/rtldavis.py test-assets/rtldavis/rtldavis_receiver.py test-assets/rtldavis/rtldavis_dsp.py /opt/weewx-extensions/weewx-rtldavis/
 
 # Vendor MQTTSubscribe into the image.
 # This preserves the manually installed service across image rebuilds.
@@ -108,7 +82,7 @@ mkdir -p /data/bin/user
 mkdir -p /data/skins/new-belchertown
 
 echo "Installing/updating weewx-rtldavis driver into /data/bin/user/rtldavis.py"
-cp /opt/weewx-extensions/weewx-rtldavis/rtldavis.py /data/bin/user/rtldavis.py
+cp /opt/weewx-extensions/weewx-rtldavis/rtldavis*.py /data/bin/user/
 
 if [ ! -f /data/bin/user/MQTTSubscribe.py ]; then
   echo "Installing WeeWX MQTTSubscribe service into /data/bin/user/MQTTSubscribe.py"
