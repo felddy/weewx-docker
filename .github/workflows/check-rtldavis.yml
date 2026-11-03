@@ -113,7 +113,12 @@ jobs:
               and isinstance(node.value, ast.Constant)
           ]
 
-          assert versions == [os.environ["EXPECTED_VERSION"]]\n          assert Path('/opt/weewx-extensions/weewx-rtldavis/rtldavis_receiver.py').is_file()\n          assert Path('/opt/weewx-extensions/weewx-rtldavis/rtldavis_dsp.py').is_file()\n          import numpy\n          import ctypes.util\n          assert ctypes.util.find_library('rtlsdr')
+          assert versions == [os.environ["EXPECTED_VERSION"]]
+          assert Path("/opt/weewx-extensions/weewx-rtldavis/rtldavis_receiver.py").is_file()
+          assert Path("/opt/weewx-extensions/weewx-rtldavis/rtldavis_dsp.py").is_file()
+          import numpy
+          import ctypes.util
+          assert ctypes.util.find_library("rtlsdr")
           assert "stn_dict.get('\''hardware_name'\'', '\''Rtldavis'\'')" in driver
           assert "return self._hardware_name" in driver
 
