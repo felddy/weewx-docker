@@ -12,6 +12,8 @@ import urllib.request
 REPOSITORY = "weewx-packages/weewx-rtldavis"
 DOCKERFILE = Path("Dockerfile.rtldavis")
 DRIVER = Path("test-assets/rtldavis/rtldavis.py")
+RECEIVER = Path("test-assets/rtldavis/rtldavis_receiver.py")
+DSP = Path("test-assets/rtldavis/rtldavis_dsp.py")
 
 
 def fail(message):
@@ -58,7 +60,7 @@ def main():
     if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
         fail(f"Invalid stable release tag: {tag}")
 
-    if not DOCKERFILE.is_file() or not DRIVER.is_file():
+    if not DOCKERFILE.is_file() or not all(\n        path.is_file() for path in (DRIVER, RECEIVER, DSP)\n    ):
         fail("Dockerfile or bundled RTL-Davis driver is missing")
 
     print(f"Checking upstream release {tag}...")
@@ -129,11 +131,11 @@ def main():
         "Dockerfile receiver version",
     )
 
-    # All validation is complete before either file is changed.
+    receiver = fetch_text(\n        f"https://raw.githubusercontent.com/{REPOSITORY}/{tag}/bin/user/rtldavis_receiver.py"\n    )\n    dsp = fetch_text(\n        f"https://raw.githubusercontent.com/{REPOSITORY}/{tag}/bin/user/rtldavis_dsp.py"\n    )\n    ast.parse(receiver, filename=str(RECEIVER))\n    ast.parse(dsp, filename=str(DSP))\n\n    # All validation is complete before files are changed.
     DOCKERFILE.write_text(updated_docker)
-    DRIVER.write_text(upstream)
+    DRIVER.write_text(upstream)\n    RECEIVER.write_text(receiver)\n    DSP.write_text(dsp)
 
-    print(f"Updated {DOCKERFILE} and {DRIVER}")
+    print(f"Updated {DOCKERFILE}, {DRIVER}, {RECEIVER}, and {DSP}")
     print("Hardware-name customization preserved.")
     print("Python syntax validation passed.")
 
