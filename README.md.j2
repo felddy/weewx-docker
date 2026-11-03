@@ -4,19 +4,16 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/felddy/weewx-docker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/felddy/weewx-docker)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6003/badge)](https://bestpractices.coreinfrastructure.org/projects/6003)
 [![CodeQL](https://github.com/felddy/weewx-docker/workflows/CodeQL/badge.svg)](https://github.com/felddy/weewx-docker/actions/workflows/codeql-analysis.yml)
-[![Container Release](https://img.shields.io/github/v/release/felddy/weewx-docker?color=brightgreen&label=release)](https://hub.docker.com/r/felddy/weewx)
+[![Container Release](https://img.shields.io/github/v/release/felddy/weewx-docker?color=brightgreen&label=release)](https://github.com/felddy/weewx-docker/pkgs/container/weewx)
+[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm%2Fv6%20%7C%20arm%2Fv7%20%7C%20arm64%20%7C%20ppc64le%20%7C%20riscv64%20%7C%20s390x-blue)](https://github.com/felddy/weewx-docker/pkgs/container/weewx)
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
-[![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/felddy/weewx)](https://hub.docker.com/r/felddy/weewx)
-[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm%2Fv6%20%7C%20arm%2Fv7%20%7C%20arm64%20%7C%20ppc64le%20%7C%20riscv64%20%7C%20s390x-blue)](https://hub.docker.com/r/felddy/weewx/tags)
-
-This docker container can be used to quickly get a
+This container can be used to quickly get a
 [WeeWX](http://weewx.com) instance up and running.
 
 ## Running ##
 
 The easiest way to start the container is to create a
-`docker-compose.yml` similar to the following.  If you use a
+`compose.yaml` similar to the following.  If you use a
 serial port to connect to your weather station, make sure the
 container has permissions to access the port.
 
@@ -28,7 +25,7 @@ name: "weewx"
 
 services:
   weewx:
-    image: felddy/weewx:{{ major_version }}
+    image: ghcr.io/felddy/weewx:{{ major_version }}
     volumes:
       - type: bind
         source: ./data
@@ -72,7 +69,7 @@ The container also supports running under an **arbitrary `uid:gid`**.
 ```yaml
 services:
   weewx:
-    image: felddy/weewx:{{ major_version }}
+    image: ghcr.io/felddy/weewx:{{ major_version }}
     user: "1234:1234"
     volumes:
       - type: bind
@@ -99,7 +96,7 @@ locales to generate, and `LANG` to the locale WeeWX should use:
 ```yaml
 services:
   weewx:
-    image: felddy/weewx:{{ major_version }}
+    image: ghcr.io/felddy/weewx:{{ major_version }}
     environment:
       - WEEWX_LOCALES=de_DE.UTF-8
       - LANG=de_DE.UTF-8
@@ -121,7 +118,7 @@ rootless and under an arbitrary `uid:gid`.
     docker compose down
     ```
 
-1. Pull the new images from the Docker hub:
+1. Pull the new images from the registry:
 
     ```console
     docker compose pull
@@ -204,14 +201,19 @@ release is pinned in that tag's
 > is compatible with your saved data, and prevents inadvertent upgrades to a new
 > major version.
 
-| Image:tag            | Description                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| `felddy/weewx:{{ major_version }}`     | The most recent image matching the major version number.  Most users will use this tag. |
-| `felddy/weewx:{{ major_minor_version }}`   | The most recent image matching the major and minor version numbers.                     |
-| `felddy/weewx:{{ container_version }}` | An exact image version.                                                                 |
+| Image:tag | Description |
+| --------- | ----------- |
+| `ghcr.io/felddy/weewx:{{ major_version }}` | The most recent image matching the major version number.  Most users will use this tag. |
+| `ghcr.io/felddy/weewx:{{ major_minor_version }}` | The most recent image matching the major and minor version numbers. |
+| `ghcr.io/felddy/weewx:{{ container_version }}` | An exact image version. |
 
-See the [tags tab](https://hub.docker.com/r/felddy/weewx/tags) on Docker
-Hub for a list of all the supported tags.
+See the [packages page](https://github.com/felddy/weewx-docker/pkgs/container/weewx)
+for a complete list of available tags.
+
+> [!NOTE]
+> Releases are also mirrored to [Docker
+> Hub](https://hub.docker.com/r/felddy/weewx) and can be referenced using the
+> full registry path: `docker.io/felddy/weewx:{{ major_version }}`
 
 ## Volumes ##
 
@@ -225,15 +227,14 @@ Build the image locally using this git repository as the [build context](https:/
 
 ```console
 docker build \
-  --tag felddy/weewx:{{ container_version }} \
+  --tag ghcr.io/felddy/weewx:{{ container_version }} \
   https://github.com/felddy/weewx-docker.git#develop
 ```
 
 ## Cross-platform builds ##
 
-To create images that are compatible with other platforms you can use the
-[`buildx`](https://docs.docker.com/buildx/working-with-buildx/) feature of
-Docker:
+To create images that are compatible with other platforms you can use
+[`buildx`](https://docs.docker.com/buildx/working-with-buildx/):
 
 1. Copy the project to your machine using the `Clone` button above
    or the command line:
@@ -249,7 +250,7 @@ Docker:
     docker buildx build \
       --platform linux/amd64 \
       --output type=docker \
-      --tag felddy/weewx:{{ container_version }} .
+      --tag ghcr.io/felddy/weewx:{{ container_version }} .
     ```
 
 ## Contributing ##

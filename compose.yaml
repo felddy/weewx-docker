@@ -6,7 +6,7 @@ volumes:
 
 services:
   weewx:
-    image: felddy/weewx:5
+    image: ghcr.io/felddy/weewx:5
     # devices:
     #   - "/dev/ttyUSB0:/dev/ttyUSB0"
     volumes:
