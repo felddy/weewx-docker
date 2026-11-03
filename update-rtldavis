@@ -111,28 +111,19 @@ def main():
 
     upstream = replace_once(
         upstream,
-        "        stn_dict = config_dict.get(DRIVER_NAME, {})
-",
-        "        stn_dict = config_dict.get(DRIVER_NAME, {})
-"
-        "        self._hardware_name = stn_dict.get('hardware_name', 'Rtldavis')
-",
+        "        stn_dict = config_dict.get(DRIVER_NAME, {})\n",
+        "        stn_dict = config_dict.get(DRIVER_NAME, {})\n"
+        "        self._hardware_name = stn_dict.get('hardware_name', 'Rtldavis')\n",
         "hardware_name initialization",
     )
     upstream = replace_once(
         upstream,
-        "    def hardware_name(self):
-        return 'Rtldavis'
-",
-        "    def hardware_name(self):
-        return self._hardware_name
-",
+        "    def hardware_name(self):\n        return 'Rtldavis'\n",
+        "    def hardware_name(self):\n        return self._hardware_name\n",
         "hardware_name property",
     )
 
-    upstream = "
-".join(line.rstrip(" \t") for line in upstream.split("
-"))
+    upstream = "\n".join(line.rstrip(" \t") for line in upstream.split("\n"))
     ast.parse(upstream, filename=str(DRIVER))
 
     updated_docker = replace_once(
