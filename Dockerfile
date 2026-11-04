@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_VERSION=3.14.6
+ARG PYTHON_VERSION=3.14.10
 # The Debian suite the python:${PYTHON_VERSION}-slim image is built on;
 # archive-state below tracks its security archives.
 ARG DEBIAN_SUITE=trixie
