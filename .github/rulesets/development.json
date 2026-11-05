@@ -41,6 +41,7 @@
         ],
         "dismiss_stale_reviews_on_push": false,
         "require_code_owner_review": true,
+        "require_extra_approval_for_unattributed_changes": true,
         "require_last_push_approval": false,
         "required_approving_review_count": 0,
         "required_review_thread_resolution": true,
@@ -83,13 +84,6 @@
     },
     {
       "type": "required_signatures"
-    },
-    {
-      "parameters": {
-        "review_draft_pull_requests": false,
-        "review_on_push": false
-      },
-      "type": "copilot_code_review"
     }
   ],
   "target": "branch"
