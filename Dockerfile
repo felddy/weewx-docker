@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.14.10
+# Build-stage interpreter; may trail PYTHON_VERSION until the full image
+# covers every platform in the build matrix (#548).
+ARG PYTHON_BUILD_VERSION=3.14.8
 # The Debian suite the python:${PYTHON_VERSION}-slim image is built on;
 # archive-state below tracks its security archives.
 ARG DEBIAN_SUITE=trixie
@@ -21,7 +24,7 @@ ARG DEBIAN_SUITE
 ADD https://deb.debian.org/debian-security/dists/${DEBIAN_SUITE}-security/InRelease /security
 ADD https://deb.debian.org/debian/dists/${DEBIAN_SUITE}-updates/InRelease /updates
 
-FROM python:${PYTHON_VERSION} AS build-stage
+FROM python:${PYTHON_BUILD_VERSION} AS build-stage
 
 # clang/lld are used to build any dependencies that ship only as source
 # distributions on the less common target platforms.
