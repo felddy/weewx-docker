@@ -205,7 +205,7 @@ release is pinned in that tag's
 | --------- | ----------- |
 | `ghcr.io/felddy/weewx:5` | The most recent image matching the major version number.  Most users will use this tag. |
 | `ghcr.io/felddy/weewx:5.5` | The most recent image matching the major and minor version numbers. |
-| `ghcr.io/felddy/weewx:5.5.6` | An exact image version. |
+| `ghcr.io/felddy/weewx:5.5.7` | An exact image version. |
 
 See the [packages page](https://github.com/felddy/weewx-docker/pkgs/container/weewx)
 for a complete list of available tags.
@@ -227,7 +227,7 @@ Build the image locally using this git repository as the [build context](https:/
 
 ```console
 docker build \
-  --tag ghcr.io/felddy/weewx:5.5.6 \
+  --tag ghcr.io/felddy/weewx:5.5.7 \
   https://github.com/felddy/weewx-docker.git#develop
 ```
 
@@ -250,7 +250,7 @@ To create images that are compatible with other platforms you can use
     docker buildx build \
       --platform linux/amd64 \
       --output type=docker \
-      --tag ghcr.io/felddy/weewx:5.5.6 .
+      --tag ghcr.io/felddy/weewx:5.5.7 .
     ```
 
 ## Contributing ##
