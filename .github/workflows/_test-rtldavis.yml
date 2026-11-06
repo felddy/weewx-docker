@@ -69,11 +69,14 @@ jobs:
             --entrypoint /bin/bash \
             "${IMAGE_REF}" \
             -ec '
-              command -v rtldavis
               command -v rtl_test
               command -v rtl_fm
+              test ! -e /usr/local/bin/rtldavis
+              /opt/venv/bin/python -c "import numpy, ctypes.util; assert ctypes.util.find_library(\"rtlsdr\")"
 
               test -f /opt/weewx-extensions/weewx-rtldavis/rtldavis.py
+              test -f /opt/weewx-extensions/weewx-rtldavis/rtldavis_receiver.py
+              test -f /opt/weewx-extensions/weewx-rtldavis/rtldavis_dsp.py
               test -f /opt/weewx-extensions/MQTTSubscribe/MQTTSubscribe.py
               test -f /opt/weewx-extensions/weewx-mqtt/mqtt.py
               test -d /opt/weewx-extensions/weewx-belchertown-new/new-belchertown
@@ -162,6 +165,8 @@ jobs:
             /tmp/rtldavis-startup.log
 
           test -f "${TEST_DATA}/bin/user/rtldavis.py"
+          test -f "${TEST_DATA}/bin/user/rtldavis_receiver.py"
+          test -f "${TEST_DATA}/bin/user/rtldavis_dsp.py"
           test -f "${TEST_DATA}/bin/user/MQTTSubscribe.py"
           test -f "${TEST_DATA}/bin/user/mqtt.py"
           test -d "${TEST_DATA}/skins/new-belchertown"
