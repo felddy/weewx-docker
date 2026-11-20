@@ -139,7 +139,7 @@ repos:
           - flake8-noqa==1.5.0
           - pep8-naming==0.15.1
   - repo: https://github.com/PyCQA/isort
-    rev: 8.0.1
+    rev: 9.0.2
     hooks:
       - id: isort
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -171,11 +171,12 @@ repos:
         files: ^(README\.md|README\.md\.j2|src/version\.txt)$
         pass_filenames: false
   - repo: https://github.com/ansible/ansible-lint
-    rev: v26.10.1
+    rev: v26.11.0
     hooks:
       - id: ansible-lint
         always_run: false
         files: (^|/)(ansible|playbooks|roles|molecule|group_vars|host_vars)/|(^|/)(ansible\.cfg|\.ansible-lint(\.ya?ml)?)$
+        language_version: python3
         additional_dependencies:
           - ansible-core>=2.17.7
   - repo: https://github.com/antonbabenko/pre-commit-terraform
