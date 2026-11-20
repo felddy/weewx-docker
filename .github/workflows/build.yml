@@ -48,13 +48,13 @@ jobs:
     name: Diagnostics
     permissions:
       contents: read
-    uses: felddy/reusable-workflows/.github/workflows/diagnostics.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/diagnostics.yml@v6
 
   config:
     name: Config
     permissions:
       contents: read
-    uses: felddy/reusable-workflows/.github/workflows/project-config.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/project-config.yml@v6
     with:
       version-file: src/version.txt
       image-name: felddy/weewx
@@ -67,7 +67,7 @@ jobs:
     name: Lint
     permissions:
       contents: read
-    uses: felddy/reusable-workflows/.github/workflows/common-lint.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/common-lint.yml@v6
 
   pipeline:
     name: Pipeline
@@ -85,7 +85,7 @@ jobs:
       attestations: write
       artifact-metadata: write
       security-events: write
-    uses: felddy/reusable-workflows/.github/workflows/container-pipeline.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/container-pipeline.yml@v6
     with:
       image-name: ${{ needs.config.outputs.image-name }}
       platforms: ${{ needs.config.outputs.platforms }}
@@ -114,6 +114,6 @@ jobs:
     # genuine failures are caught while cancelled runs simply skip the gate.
     if: ${{ !cancelled() }}
     permissions: {}
-    uses: felddy/reusable-workflows/.github/workflows/ci-gate.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/ci-gate.yml@v6
     with:
       needs-json: ${{ toJSON(needs) }}

@@ -1,0 +1,43 @@
+---
+name: Renovate
+
+# Trigger-only stub: the dual-trigger renovate workflow in
+# felddy/reusable-workflows does the work.
+# What gets updated is governed by the local .github/renovate.json; the
+# App id comes from the RENOVATE_APP_ID repository variable and the
+# private key from the RENOVATE_PRIVATE_KEY secret.
+
+on:  # yamllint disable-line rule:truthy
+  schedule:
+    - cron: 44 */6 * * *  # four times a day, offset from sibling repos
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        default: false
+        description: Log what would happen without creating branches or PRs
+        required: false
+        type: boolean
+      log-level:
+        default: info
+        description: Renovate log level
+        options:
+          - debug
+          - info
+        required: false
+        type: choice
+
+# No concurrency block here: the called workflow's own group evaluates
+# with this workflow's name and serializes runs; declaring the same
+# group here deadlocks parent against child.
+
+permissions: {}
+
+jobs:
+  renovate:
+    uses: felddy/reusable-workflows/.github/workflows/renovate.yml@v6
+    with:
+      dry-run: ${{ inputs.dry-run || false }}
+      log-level: ${{ inputs.log-level || 'info' }}
+    secrets: inherit
+    permissions:
+      contents: read
