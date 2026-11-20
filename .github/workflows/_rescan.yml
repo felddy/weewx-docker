@@ -26,7 +26,7 @@ jobs:
       attestations: write
       artifact-metadata: write
       security-events: write
-    uses: felddy/reusable-workflows/.github/workflows/container-rescan.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/container-rescan.yml@v6
     with:
       image-name: felddy/weewx
       vex-file: .github/openvex.json
