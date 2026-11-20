@@ -1,0 +1,36 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "python",
+      "description": "Track the Python runtime image pinned in the Dockerfile. The docker datasource fires when the image tag publishes, not when CPython releases. PYTHON_BUILD_VERSION trails deliberately (#548) and is not managed.",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG PYTHON_VERSION=(?<currentValue>\\S+)"
+      ],
+      "versioningTemplate": "docker"
+    }
+  ],
+  "enabledManagers": [
+    "custom.regex"
+  ],
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "commitMessageTopic": "Python runtime",
+      "labels": [
+        "bot :robot:",
+        "dependencies :game_die:"
+      ],
+      "matchDatasources": [
+        "docker"
+      ]
+    }
+  ]
+}

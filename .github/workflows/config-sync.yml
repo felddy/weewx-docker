@@ -15,7 +15,9 @@ permissions: {}
 
 jobs:
   sync:
-    uses: felddy/reusable-workflows/.github/workflows/config-sync.yml@v5
+    uses: felddy/reusable-workflows/.github/workflows/config-sync.yml@v6
+    with:
+      central-ref: v6
     permissions:
       contents: write
       pull-requests: write
