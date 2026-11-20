@@ -4,8 +4,8 @@ rules:
     config:
       policies:
         # felddy-owned reusable workflows deliberately ride the
-        # advance-only floating v5 tag (the accepted consumption model);
-        # everything else must stay hash-pinned.
+        # advance-only floating major tag (the accepted consumption
+        # model); everything else must stay hash-pinned.
         felddy/reusable-workflows/*: ref-pin
         "*": hash-pin
   archived-uses:
@@ -19,3 +19,5 @@ rules:
       # re-trigger the branch's checks, which GITHUB_TOKEN pushes do not.
       - _render-release-docs.yml
       - config-sync.yml
+      # Passes the Renovate App credentials by design.
+      - renovate.yml
