@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_VERSION=3.14.10
+ARG PYTHON_VERSION=3.15.2
 # Build-stage interpreter; may trail PYTHON_VERSION until the full image
 # covers every platform in the build matrix (#548).
 ARG PYTHON_BUILD_VERSION=3.14.8
