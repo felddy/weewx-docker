@@ -110,6 +110,14 @@ The requested locales are compiled into `/data/locale` on first start and
 reused afterwards. Generation runs as the container user, so it works
 rootless and under an arbitrary `uid:gid`.
 
+## Running on Kubernetes ##
+
+The [Kubernetes deployment guide](docs/deployment/kubernetes/README.md)
+shows how to run WeeWX on a cluster: granting the pod access to the
+station's USB serial port without a privileged container, scheduling the
+pod to whichever node the station is plugged into, installing extensions
+with pinned versions, and keeping secrets out of `weewx.conf`.
+
 ## Upgrading ##
 
 1. Stop the running container:

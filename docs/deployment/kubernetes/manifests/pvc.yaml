@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: weewx-data
+  namespace: weewx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # Uses the cluster's default StorageClass; uncomment to pick another.
+  # storageClassName: my-storage-class

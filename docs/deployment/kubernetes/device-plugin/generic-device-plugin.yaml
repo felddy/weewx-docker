@@ -1,0 +1,93 @@
+---
+# Advertises the weather station's serial port as the extended resource
+# example.com/weather-station using
+# https://github.com/squat/generic-device-plugin.
+#
+# Runs on every node; only a node where a matching device actually exists
+# advertises non-zero capacity.  A pod that requests the resource therefore
+# schedules to the node the station is plugged into AND receives the device
+# in its cgroup allowlist — no privileged container required.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: device-plugin
+  labels:
+    # The DaemonSet mounts hostPath volumes (/dev and the kubelet
+    # device-plugin socket directory), which exceed the "baseline"
+    # Pod Security profile.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: generic-device-plugin
+  namespace: device-plugin
+  labels:
+    app.kubernetes.io/name: generic-device-plugin
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: generic-device-plugin
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: generic-device-plugin
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: Exists
+          effect: NoExecute
+        - operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: generic-device-plugin
+          image: ghcr.io/squat/generic-device-plugin:latest
+          args:
+            # The domain is yours to choose; it namespaces the extended
+            # resource name (<domain>/<device name>).
+            - --domain
+            - example.com
+            - --device
+            - |
+              name: weather-station
+              groups:
+                - paths:
+                    - path: /dev/ttyUSB*
+          ports:
+            - containerPort: 8080
+              name: http
+          # Root is required only to create the plugin's gRPC socket in the
+          # kubelet's root-owned device-plugin directory.
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 50m
+              memory: 10Mi
+            limits:
+              cpu: 50m
+              memory: 20Mi
+          volumeMounts:
+            - name: device-plugin
+              mountPath: /var/lib/kubelet/device-plugins
+            - name: dev
+              mountPath: /dev
+              readOnly: true
+      volumes:
+        - name: device-plugin
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
+        - name: dev
+          hostPath:
+            path: /dev
