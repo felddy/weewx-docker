@@ -1,0 +1,144 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weewx
+  namespace: weewx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weewx
+  strategy:
+    # A serial device and a ReadWriteOnce volume can each serve only one pod:
+    # the old pod must release both before a replacement starts.
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: weewx
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        # On most distributions the host tty is group "dialout" (gid 20);
+        # the supplemental group lets the non-root container user open it.
+        # See the guide for hosts without a dialout group.
+        supplementalGroups: [20]
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Render /data/weewx.conf from the weewx-config ConfigMap: ${WEEWX_*}
+        # tokens are replaced from the weewx-secrets Secret, and everything
+        # else passes through verbatim.  A config containing no tokens is
+        # copied unchanged.
+        - name: render-config
+          image: ghcr.io/felddy/weewx:5
+          command:
+            - python3
+            - -c
+            - |
+              import os, string
+              template = open("/config/weewx.conf").read()
+              secrets = {k: v for k, v in os.environ.items()
+                         if k.startswith("WEEWX_")}
+              rendered = string.Template(template).safe_substitute(secrets)
+              open("/render/weewx.conf", "w").write(rendered)
+          envFrom:
+            - secretRef:
+                name: weewx-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: config-template
+              mountPath: /config
+              readOnly: true
+            - name: rendered-config
+              mountPath: /render
+        # Install the extensions listed in requirements.txt into an emptyDir
+        # mounted at the image's PIP_TARGET / PYTHONPATH, fresh on every pod
+        # start.  The pinned versions in the file are the only copies that
+        # can ever be live, and the data volume holds no package files.
+        # Requires network access to the package sources at pod start.
+        - name: install-extensions
+          image: ghcr.io/felddy/weewx:5
+          command:
+            - pip
+            - install
+            - --no-cache-dir
+            - --requirement
+            - /extensions/requirements.txt
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: extensions
+              mountPath: /extensions
+              readOnly: true
+            - name: plugins
+              mountPath: /data/lib/python/site-packages
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: weewx
+          image: ghcr.io/felddy/weewx:5
+          env:
+            # MUST match the weather station's timezone.  WeeWX syncs the
+            # station console's clock from container time, and the console
+            # stamps archive records with it: a wrong TZ rewrites the
+            # station clock and corrupts record timestamps.
+            - name: TZ
+              value: Etc/UTC
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+              # The extended resource advertised by the device plugin.  It
+              # both grants the tty to this container and constrains
+              # scheduling to the node the station is plugged into — this
+              # deployment needs no nodeSelector.
+              example.com/weather-station: 1
+          volumeMounts:
+            - name: weewx-data
+              mountPath: /data
+            - name: plugins
+              mountPath: /data/lib/python/site-packages
+            - name: rendered-config
+              mountPath: /data/weewx.conf
+              subPath: weewx.conf
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: weewx-data
+          persistentVolumeClaim:
+            claimName: weewx-data
+        - name: config-template
+          configMap:
+            name: weewx-config
+        - name: extensions
+          configMap:
+            name: weewx-extensions
+        - name: rendered-config
+          emptyDir: {}
+        - name: plugins
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

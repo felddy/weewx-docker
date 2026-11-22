@@ -1,0 +1,12 @@
+# WeeWX extensions, pip-installed into the pod at every start by the
+# install-extensions initContainer.  Pin exact versions.
+#
+# PyPI-hosted extensions use a plain requirement line:
+#   some-weewx-extension==1.2.3
+#
+# GitHub-only extensions use a tag-tarball URL (not `git+https` — the image
+# carries no git binary):
+#   weewx-home-assistant @ https://github.com/felddy/weewx-home-assistant/archive/refs/tags/v1.3.2.tar.gz
+#
+# An extension that registers services must also be wired up in weewx.conf
+# (for example `report_services` in the [Engine] section).
