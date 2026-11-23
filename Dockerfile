@@ -1,9 +1,11 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.15.2
-# Build-stage interpreter; may trail PYTHON_VERSION until the full image
-# covers every platform in the build matrix (#548).
-ARG PYTHON_BUILD_VERSION=3.14.8
+# Build-stage interpreter; may trail PYTHON_VERSION in patch level until the
+# full image covers every platform in the build matrix (#548) — but never in
+# minor: the venv it builds must match the runtime's lib/pythonX.Y layout and
+# extension ABI (#561).
+ARG PYTHON_BUILD_VERSION=3.15.2
 # The Debian suite the python:${PYTHON_VERSION}-slim image is built on;
 # archive-state below tracks its security archives.
 ARG DEBIAN_SUITE=trixie
