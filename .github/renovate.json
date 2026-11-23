@@ -5,7 +5,7 @@
       "customType": "regex",
       "datasourceTemplate": "docker",
       "depNameTemplate": "python",
-      "description": "Track the Python runtime image pinned in the Dockerfile. The docker datasource fires when the image tag publishes, not when CPython releases. PYTHON_BUILD_VERSION trails deliberately (#548) and is not managed.",
+      "description": "Track the Python runtime image pinned in the Dockerfile. The docker datasource fires when the image tag publishes, not when CPython releases. PYTHON_BUILD_VERSION trails deliberately (#548) and is not managed; it must stay on the runtime version's minor (#561).",
       "managerFilePatterns": [
         "/^Dockerfile$/"
       ],
